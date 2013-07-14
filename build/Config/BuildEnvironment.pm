@@ -8,9 +8,15 @@ my %BUILDDEF = (
             # Filename conventions
             exe         => '',
             o           => '.o',
+            dirslash    => '/',
+            outtonull   => '/dev/null',
+            dontecho    => '@',
+            nologo      => '',
+            'echo'      => 'echo',
 
             # Command names
             rm          => 'rm -f',
+            rmrf        => 'rm -rf',
             cat         => 'cat',
             make        => 'make',
 
@@ -26,15 +32,20 @@ my %BUILDDEF = (
         # Defaults for Windows
      => {
             # Misc
-            os   => 'Windows',
+            os          => 'Windows',
 
             # Filename conventions
-            exe  => '.exe',
-            o    => '.obj',
+            exe         => '.exe',
+            o           => '.obj',
+            dirslash    => '\\',
+            outtonull   => 'NUL',
+            dontecho    => '@',
 
             # Command names
-            rm   => 'del',
-            cat  => 'type',
+            rm          => 'del /Q',
+            rmrf        => 'del /S /Q',
+            cat         => 'type',
+            'echo'      => 'echo',
         },
 );
 
@@ -65,6 +76,7 @@ my %TOOLCHAINS = (
                 lopt        => '/LTCG',
                 ldebug      => '/debug',
                 linstrument => '/Profile',
+                nologo      => '/nologo',
             },
   'gcc' =>
             {
@@ -163,14 +175,10 @@ my %OSTYPES = qw[
 
 sub detect {
     my $opts = shift;
-    my %config;
-
     my $ostype = os_type();
+    my %config = %{ $BUILDDEF{ $ostype } };
 
     if ($ostype eq 'Windows') {
-        # Defaults for Windows
-
-        %config = %{ $BUILDDEF{ $ostype } };
 
         # We support the Microsoft toolchain only on Windows right now.
         if (can_run('cl /nologo /?')) {
@@ -198,7 +206,6 @@ sub detect {
     }
     elsif ($ostype eq 'Unix') {
 
-        %config = %{ $BUILDDEF{ $ostype } };
         $config{os} = $^O; # to be generic, one must go with the flow
 
         my $gcc   = can_run('gcc');
@@ -223,6 +230,17 @@ sub detect {
         return (excuse => 'No recognized operating system or compiler found.'."  found: $^O");
     }
 
+    if ($opts->{verbose}) {
+        $config{verbose} = 1;
+        $config{nologo} = '';
+        $config{dontecho} = '';
+        $config{silent} = '';
+    }
+    else {
+        $config{out2null} = '';
+        $config{verbose} = 0;
+        $config{silent} = '$(OUT2NULL) $(ERR2NULL)'
+    }
     $config{cflags}  = join ' ' => @config{qw( cmiscflags cinstrument cdebug copt )};
     $config{ldflags} = join ' ' => @config{qw( lmiscflags linstrument ldebug lopt )};
 

@@ -1,8 +1,17 @@
+# Output settings
+OUTTONULL = >@outtonull@
+ERRTONULL = 2>@outtonull@
+ERRTOOUT  = 2>&1
+SILENT    = @silent@
+ECHO      = @echo@
+VERBOSE   = @verbose@
+DONTECHO  = @dontecho@
+
 # Compiler configuration
-CC       = @cc@
+CC       = @dontecho@@cc@
 CFLAGS   = @cflags@
 CINCLUDE = -I3rdparty/apr/include -I3rdparty/libatomic_ops/src -I3rdparty/libtommath/ -I3rdparty/sha1/ -Isrc -I3rdparty
-LD       = @link@
+LD       = @dontecho@@link@
 LDFLAGS  = @ldflags@
 LLIBS    = @llibs@
 COUTO    = @couto@
@@ -11,21 +20,30 @@ LOUTO    = @louto@
 # File extensions
 EXE = @exe@
 O   = @o@
+DIRSLASH = @dirslash@
 
 # Tool configuration
-MAKE = @make@
-RM   = @rm@
-CAT  = @cat@
+MAKE = @dontecho@@make@ @nologo@
+RM   = @dontecho@@rm@
+RMRF = @dontecho@@rmrf@
+CAT  = @dontecho@@cat@
 
 # APR related
 APR_LIB = @apr_lib@
-APR_BUILD_LINE = @apr_build_line@
+APR_BUILD_LINE = @dontecho@@apr_build_line@
 
 # libatomic_ops related
 LAO_LIB = @lao_lib@
-LAO_BUILD_LINE = @lao_build_line@
+LAO_BUILD_LINE = @dontecho@@lao_build_line@
 # the following will be the same as LAO_LIB if it's to be built, otherwise blank
 BUILD_LAO_LIB = @lao_whether_build@
+
+# dyncall related
+DYNCALL_BUILD = @dontecho@@dyncall_build@
+DYNCALL_LIB = 3rdparty/dyncall/dynload/libdynload_s.lib
+DYNCALL_LIBS = 3rdparty/dyncall/dyncall/libdyncall_s.lib \
+  3rdparty/dyncall/dyncallback/libdyncallback_s.lib \
+  3rdparty/dyncall/dynload/libdynload_s.lib
 
 # sha1 related
 SHA1_LIB = 3rdparty/sha1/sha1$(O)
@@ -282,19 +300,8 @@ LIBTOMMATH_SOURCE = $(TOM)core.c \
         $(TOM)_s_mp_sqr.c \
         $(TOM)_s_mp_sub.c \
 
-
-DYNCALL_BIN = 3rdparty/dyncall/dyncall/libdyncall_s$(O) \
-  3rdparty/dyncall/dyncallback/libdyncallback_s$(O) \
-  3rdparty/dyncall/dynload/libdynload_s$(O)
-
-$(DYNCALL_BIN):
-	@dyncall_build@
-
-DYNCALL_OPS        = nqp_dyncall_ops
-DYNCALL_OPS_SOURCE = nqp_dyncall.ops
-
 # Various collections of libraries, objects and sources.
-THIRDPARTY_LIBS = $(APR_LIB) $(BUILD_LAO_LIB) $(SHA1_LIB)
+THIRDPARTY_LIBS = $(APR_LIB) $(BUILD_LAO_LIB) $(SHA1_LIB) $(DYNCALL_BIN)
 CORE_OBJS = src/core/args$(O) src/core/exceptions$(O) src/core/interp$(O) src/core/threadcontext$(O) \
             src/core/compunit$(O) src/core/bytecode$(O) src/core/frame$(O) src/core/validation$(O) \
             src/core/bytecodedump$(O) src/core/threads$(O) src/core/ops$(O) src/core/hll$(O) \
@@ -347,18 +354,22 @@ moarvm$(EXE): $(THIRDPARTY_LIBS) $(LIBTOMMATH_BIN) $(CORE_OBJS) $(MAIN_OBJ)
 # APR
 $(APR_LIB):
 	$(APR_BUILD_LINE)
+
 3rdparty/apr/include/apr.h: $(APR_LIB)
 
 # libatomic_ops
 $(LAO_LIB):
-	$(LAO_BUILD_LINE)
+	@dontecho@$(LAO_BUILD_LINE)
 
 # sha1
 $(SHA1_LIB): 3rdparty/sha1/sha1.h
-	cd 3rdparty/sha1 && $(CC) -c $(COUTO)sha1$(O) -I. $(CFLAGS) sha1.c
+	@dontecho@cd 3rdparty/sha1 && $(CC) -c $(COUTO)sha1$(O) -I. $(CFLAGS) sha1.c
+
+$(DYNCALL_LIB):
+	$(DYNCALL_BUILD)
 
 test:
-	@echo "Please build nqp-cc and run the tests in there"
+	@$(ECHO) "Please build nqp-cc and run the tests in there"
 
 # Generated unicode database
 src/strings/unicode.c: src/strings/unicode_db.c src/strings/unicode_ops.c
@@ -737,6 +748,56 @@ src/main$(O): src/main.c $(HEADERS)
 
 # Cleanup.
 clean:
-	$(RM) moarvm$(EXE)
-	$(RM) src/*$(O) src/6model/*$(O) src/6model/reprs/*$(O) src/core/*$(O) src/gc/*$(O) src/strings/*$(O) src/strings/unicode.c src/io/*$(O) src/math/*$(O)
-	$(RM) 3rdparty/libtommath/*$(O)
+	$(RM) moarvm$(EXE) $(ERRTONULL)
+	$(RM) src/*$(O) src/6model/*$(O) src/6model/reprs/*$(O) src/core/*$(O) src/gc/*$(O) src/strings/*$(O) src/strings/unicode.c src/io/*$(O) src/math/*$(O) $(ERRTONULL)
+	$(RM) 3rdparty/libtommath/*$(O) $(ERRTONULL)
+
+realclean: clean
+	$(RM) $(DYNCALL_LIBS) $(ERRTONULL)
+	$(RMRF) 3rdparty/apr/LibR $(ERRTONULL)
+	$(RMRF) 3rdparty/apr$(DIRSLASH).libs $(ERRTONULL)
+	$(RM) 3rdparty/apr$(DIRSLASH).make.dirs $(ERRTONULL)
+	$(RMRF) 3rdparty/apr/Release $(ERRTONULL)
+	$(RM) 3rdparty/apr/include/apr.h $(ERRTONULL)
+	$(RMRF) 3rdparty/apr/x64 $(ERRTONULL)
+	$(RM) 3rdparty/apr/apr-1-config $(ERRTONULL)
+	$(RM) 3rdparty/apr/apr-config.out $(ERRTONULL)
+	$(RM) 3rdparty/apr/apr.exp $(ERRTONULL)
+	$(RM) 3rdparty/apr/apr.pc $(ERRTONULL)
+	$(RM) 3rdparty/apr/apr.spec $(ERRTONULL)
+	$(RM) 3rdparty/apr/config.log $(ERRTONULL)
+	$(RM) 3rdparty/apr/config.nice $(ERRTONULL)
+	$(RM) 3rdparty/apr/config.status $(ERRTONULL)
+	$(RM) 3rdparty/apr/export_vars.c $(ERRTONULL)
+	$(RM) 3rdparty/apr/exports.c $(ERRTONULL)
+	$(RM) 3rdparty/apr/include/arch/unix/apr_private.h $(ERRTONULL)
+	$(RM) 3rdparty/apr/include/arch/unix/apr_private.h.in~ $(ERRTONULL)
+	$(RM) 3rdparty/apr/libtool $(ERRTONULL)
+	$(RMRF) 3rdparty/libatomic_ops/autom4te.cache $(ERRTONULL)
+	$(RM) 3rdparty/libatomic_ops/config.log $(ERRTONULL)
+	$(RM) 3rdparty/libatomic_ops/config.status $(ERRTONULL)
+	$(RM) 3rdparty/libatomic_ops/pkgconfig/atomic_ops-uninstalled.pc $(ERRTONULL)
+	$(RM) 3rdparty/libatomic_ops/pkgconfig/atomic_ops.pc $(ERRTONULL)
+	$(RMRF) 3rdparty/libatomic_ops/src$(DIRSLASH).deps $(ERRTONULL)
+	$(RM) 3rdparty/libatomic_ops/src/config.h $(ERRTONULL)
+	$(RM) 3rdparty/libatomic_ops/src/libatomic_ops.a $(ERRTONULL)
+	$(RM) 3rdparty/libatomic_ops/src/stamp-h1 $(ERRTONULL)
+	$(RMRF) 3rdparty/libatomic_ops/tests$(DIRSLASH).deps $(ERRTONULL)
+	$(RM) 3rdparty/libatomic_ops/tests/list_atomic.i $(ERRTONULL)
+	$(RMRF) src/gen/config.h $(ERRTONULL)
+	$(RM) *.la $(ERRTONULL)
+	$(RM) *.obj $(ERRTONULL)
+	$(RM) *.exe $(ERRTONULL)
+	$(RM) *.o $(ERRTONULL)
+	$(RM) *.pdb $(ERRTONULL)
+	$(RM) *.suo $(ERRTONULL)
+	$(RM) *.ilk $(ERRTONULL)
+	$(RM) *.lo $(ERRTONULL)
+	$(RM) *.so $(ERRTONULL)
+	$(RM) *.vsp $(ERRTONULL)
+	$(RM) *.psess $(ERRTONULL)
+	$(RM) src/strings/unicode.c $(ERRTONULL)
+	$(RM) *.class $(ERRTONULL)
+	$(RM) tags $(ERRTONULL)
+	$(RM) 3rdparty/dyncall/ConfigVars $(ERRTONULL)
+	$(RM) Makefile $(ERRTONULL)
