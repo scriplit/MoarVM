@@ -40,7 +40,7 @@ BUILD_LAO_LIB = @lao_whether_build@
 
 # dyncall related
 DYNCALL_BUILD = @dontecho@@dyncall_build@
-DYNCALL_LIB = 3rdparty/dyncall/dynload/libdynload_s.lib
+DYNCALL_LIB = 3rdparty/dyncall/dyncall/libdyncall_s.lib
 DYNCALL_LIBS = 3rdparty/dyncall/dyncall/libdyncall_s.lib \
   3rdparty/dyncall/dyncallback/libdyncallback_s.lib \
   3rdparty/dyncall/dynload/libdynload_s.lib
