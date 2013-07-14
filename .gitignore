@@ -60,6 +60,6 @@ UNIDATA/*
 tags
 
 3rdparty/dyncall/ConfigVars
-3rdparty/dyncall/dyncall/libdyncall_s.lib
-3rdparty/dyncall/dyncallback/libdyncallback_s.lib
-3rdparty/dyncall/dynload/libdynload_s.lib
+3rdparty/dyncall/dyncall/libdyncall_s.*
+3rdparty/dyncall/dyncallback/libdyncallback_s.*
+3rdparty/dyncall/dynload/libdynload_s.*
