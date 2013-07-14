@@ -21,7 +21,7 @@ LOUTO    = @louto@
 EXE      = @exe@
 O        = @o@
 DIRSLASH = @dirslash@
-LIBEXT   = @lib@
+LIBEXT   = @libext@
 
 # Tool configuration
 MAKE = @dontecho@@make@ @nologo@
