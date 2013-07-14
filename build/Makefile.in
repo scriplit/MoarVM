@@ -300,6 +300,17 @@ LIBTOMMATH_SOURCE = $(TOM)core.c \
         $(TOM)_s_mp_sqr.c \
         $(TOM)_s_mp_sub.c \
 
+
+DYNCALL_BIN = 3rdparty/dyncall/dyncall/libdyncall_s$(O) \
+  3rdparty/dyncall/dyncallback/libdyncallback_s$(O) \
+  3rdparty/dyncall/dynload/libdynload_s$(O)
+
+$(DYNCALL_BIN):
+	@dyncall_build@
+
+DYNCALL_OPS        = nqp_dyncall_ops
+DYNCALL_OPS_SOURCE = nqp_dyncall.ops
+
 # Various collections of libraries, objects and sources.
 THIRDPARTY_LIBS = $(APR_LIB) $(BUILD_LAO_LIB) $(SHA1_LIB) $(DYNCALL_LIBS)
 CORE_OBJS = src/core/args$(O) src/core/exceptions$(O) src/core/interp$(O) src/core/threadcontext$(O) \
