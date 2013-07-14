@@ -8,10 +8,10 @@ VERBOSE   = @verbose@
 DONTECHO  = @dontecho@
 
 # Compiler configuration
-CC       = @cc@
+CC       = @dontecho@@cc@
 CFLAGS   = @cflags@
 CINCLUDE = -I3rdparty/apr/include -I3rdparty/libatomic_ops/src -I3rdparty/libtommath/ -I3rdparty/sha1/ -Isrc -I3rdparty
-LD       = @link@
+LD       = @dontecho@@link@
 LDFLAGS  = @ldflags@
 LLIBS    = @llibs@
 COUTO    = @couto@
@@ -25,17 +25,17 @@ DOTLIB   = @dotlib@
 
 # Tool configuration
 MAKE = @make@ @nologo@
-RM   = @rm@
+RM   = @dontecho@@rm@
 RMRF = @rmrf@
-CAT  = @cat@
+CAT  = @dontecho@@cat@
 
 # APR related
 APR_LIB = @apr_lib@
-APR_BUILD_LINE = @apr_build_line@
+APR_BUILD_LINE = @dontecho@@apr_build_line@
 
 # libatomic_ops related
 LAO_LIB = @lao_lib@
-LAO_BUILD_LINE = @lao_build_line@
+LAO_BUILD_LINE = @dontecho@@lao_build_line@
 # the following will be the same as LAO_LIB if it's to be built, otherwise blank
 BUILD_LAO_LIB = @lao_whether_build@
 
@@ -44,6 +44,7 @@ DYNCALL_BUILD = @dyncall_build@
 DYNCALL_LIBS = 3rdparty/dyncall/dyncall/libdyncall_s@dotlib@ \
   3rdparty/dyncall/dyncallback/libdyncallback_s@dotlib@ \
   3rdparty/dyncall/dynload/libdynload_s@dotlib@
+
 
 # sha1 related
 SHA1_LIB = 3rdparty/sha1/sha1$(O)
@@ -299,17 +300,6 @@ LIBTOMMATH_SOURCE = $(TOM)core.c \
         $(TOM)_s_mp_mul_high_digs.c \
         $(TOM)_s_mp_sqr.c \
         $(TOM)_s_mp_sub.c \
-
-
-DYNCALL_BIN = 3rdparty/dyncall/dyncall/libdyncall_s$(O) \
-  3rdparty/dyncall/dyncallback/libdyncallback_s$(O) \
-  3rdparty/dyncall/dynload/libdynload_s$(O)
-
-$(DYNCALL_BIN):
-	@dyncall_build@
-
-DYNCALL_OPS        = nqp_dyncall_ops
-DYNCALL_OPS_SOURCE = nqp_dyncall.ops
 
 # Various collections of libraries, objects and sources.
 THIRDPARTY_LIBS = $(APR_LIB) $(BUILD_LAO_LIB) $(SHA1_LIB) $(DYNCALL_LIBS)
