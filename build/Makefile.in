@@ -301,7 +301,7 @@ LIBTOMMATH_SOURCE = $(TOM)core.c \
         $(TOM)_s_mp_sub.c \
 
 # Various collections of libraries, objects and sources.
-THIRDPARTY_LIBS = $(APR_LIB) $(BUILD_LAO_LIB) $(SHA1_LIB) $(DYNCALL_BIN)
+THIRDPARTY_LIBS = $(APR_LIB) $(BUILD_LAO_LIB) $(SHA1_LIB) $(DYNCALL_LIBS)
 CORE_OBJS = src/core/args$(O) src/core/exceptions$(O) src/core/interp$(O) src/core/threadcontext$(O) \
             src/core/compunit$(O) src/core/bytecode$(O) src/core/frame$(O) src/core/validation$(O) \
             src/core/bytecodedump$(O) src/core/threads$(O) src/core/ops$(O) src/core/hll$(O) \
