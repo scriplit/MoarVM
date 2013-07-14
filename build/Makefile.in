@@ -18,9 +18,10 @@ COUTO    = @couto@
 LOUTO    = @louto@
 
 # File extensions
-EXE = @exe@
-O   = @o@
+EXE      = @exe@
+O        = @o@
 DIRSLASH = @dirslash@
+LIBEXT   = @lib@
 
 # Tool configuration
 MAKE = @dontecho@@make@ @nologo@
@@ -40,10 +41,10 @@ BUILD_LAO_LIB = @lao_whether_build@
 
 # dyncall related
 DYNCALL_BUILD = @dontecho@@dyncall_build@
-DYNCALL_LIB = 3rdparty/dyncall/dyncall/libdyncall_s.lib
-DYNCALL_LIBS = 3rdparty/dyncall/dyncall/libdyncall_s.lib \
-  3rdparty/dyncall/dyncallback/libdyncallback_s.lib \
-  3rdparty/dyncall/dynload/libdynload_s.lib
+DYNCALL_LIB = 3rdparty/dyncall/dyncall/libdyncall_s$(LIBEXT)
+DYNCALL_LIBS = 3rdparty/dyncall/dyncall/libdyncall_s$(LIBEXT) \
+  3rdparty/dyncall/dyncallback/libdyncallback_s$(LIBEXT) \
+  3rdparty/dyncall/dynload/libdynload_s$(LIBEXT)
 
 # sha1 related
 SHA1_LIB = 3rdparty/sha1/sha1$(O)
