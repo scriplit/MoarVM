@@ -10,7 +10,7 @@ my %BUILDDEF = (
             o           => '.o',
             dirslash    => '/',
             outtonull   => '/dev/null',
-            dontecho    => '@',
+            dontecho    => '',
             nologo      => '',
             'echo'      => 'echo',
 
