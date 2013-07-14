@@ -11,11 +11,12 @@ sub system_or_die {
 sub configure {
     my %config = @_;
     
+    my $make = $config{'make'};
     if ($^O =~ /MSWin32/) {
-        if ($config{'make'} eq 'nmake') {
-            system_or_die('cd 3rdparty\dyncall && Configure.bat' . (`cl 2>&1` =~ /x64/ ? ' /target-x64' : ''));
+        if ($make eq 'nmake') {
+            system_or_die('@cd 3rdparty\dyncall && Configure.bat >NUL 2>NUL' . (`cl 2>&1` =~ /x64/ ? ' /target-x64' : ''));
             return (%config,
-                dyncall_build => 'cd 3rdparty\dyncall && nmake Nmakefile'
+                dyncall_build => 'cd 3rdparty\dyncall && $(MAKE) -F Nmakefile'
             );
         }
         else {
@@ -23,7 +24,6 @@ sub configure {
         }
     }
     else {
-        my $make = $config{'make'};
         my $target_args = '';
         # heuristic according to
         # https://github.com/perl6/nqp/issues/100#issuecomment-18523608
@@ -31,12 +31,10 @@ sub configure {
             $target_args = " --target-x64";
         }
         system_or_die('cd 3rdparty/dyncall && sh configure' . $target_args);
-        if ($^O eq 'netbsd') {
-            $config{'dyncall_build'} = "cd 3rdparty/dyncall && BUILD_DIR=. $make -f BSDmakefile";
-        } else {
-            $config{'dyncall_build'} = "cd 3rdparty/dyncall && BUILD_DIR=. $make";
-        }
-        return (%config);
+        $config{'dyncall_build'} =
+            "cd 3rdparty/dyncall && BUILD_DIR=. $make"
+            . ($^O eq 'netbsd' ? " -f BSDmakefile" : "");
+        return %config;
     }
 }
 
