@@ -10,6 +10,7 @@ use lib 'build';
 use Config::BuildEnvironment;
 use Config::APR;
 use Config::LAO;
+use Config::dyncall;
 use Config::Generate;
 
 
@@ -45,6 +46,10 @@ check_excuse();
 
 print dots("Configuring libatomic_ops ...");
 %config = Config::LAO::configure(%config);
+check_excuse();
+
+print dots("Configuring dyncall ...");
+%config = Config::dyncall::configure(%config);
 check_excuse();
 
 print dots("Generating config.h ...");
