@@ -1556,4 +1556,5 @@ realclean: clean
 	@dontecho@$(RMRF) 3rdparty/apr/threadproc/unix/.libs/ $(ERRTONULL)
 	@dontecho@$(RMRF) 3rdparty/apr/time/unix/.libs/ $(ERRTONULL)
 	@dontecho@$(RMRF) 3rdparty/apr/user/unix/.libs/ $(ERRTONULL)
-	@dontecho@$(RM) Makefile $(ERRTONULL)
+	@dontecho@@mkfiledel@ $(OUTTONULL) $(ERRTONULL)
+
