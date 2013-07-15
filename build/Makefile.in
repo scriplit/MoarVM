@@ -347,14 +347,9 @@ HEADERS   = src/moarvm.h src/6model/6model.h src/core/instance.h src/core/thread
             src/strings/latin1.h src/strings/utf16.h src/math/bigintops.h \
             3rdparty/uthash.h src/gen/config.h 3rdparty/apr/include/apr.h
 
-all: moarvm$(EXE) echodone
-	@echo moarvm$(EXE) is up-to-date.
-
-echodone:
-
 # Main target
 moarvm$(EXE): $(THIRDPARTY_LIBS) $(LIBTOMMATH_BIN) $(CORE_OBJS) $(MAIN_OBJ)
-	@dontecho@$(LD) $(LOUTO)moarvm$(EXE) $(LDFLAGS) $(CORE_OBJS) $(MAIN_OBJ) $(LIBTOMMATH_BIN) $(THIRDPARTY_LIBS) $(LLIBS)
+	@dontecho@$(LD) $(LOUTO)moarvm$(EXE) $(LDFLAGS) $(CORE_OBJS) $(MAIN_OBJ) $(LIBTOMMATH_BIN) $(THIRDPARTY_LIBS) $(LLIBS) && echo moarvm$(EXE) is up-to-date.
 
 # APR
 $(APR_LIB):
@@ -1535,26 +1530,26 @@ realclean: clean
 	@dontecho@$(RM) src/strings/unicode.o $(ERRTONULL)
 	@dontecho@$(RM) src/strings/utf16.o $(ERRTONULL)
 	@dontecho@$(RM) src/strings/utf8.o $(ERRTONULL)
-	@dontecho@$(RMRF) 3rdparty/libatomic_ops/src/.deps/ $(ERRTONULL)
-	@dontecho@$(RMRF) 3rdparty/libatomic_ops/tests/.deps/ $(ERRTONULL)
-	@dontecho@$(RMRF) 3rdparty/apr/.libs/ $(ERRTONULL)
-	@dontecho@$(RMRF) 3rdparty/apr/atomic/unix/.libs/ $(ERRTONULL)
-	@dontecho@$(RMRF) 3rdparty/apr/dso/unix/.libs/ $(ERRTONULL)
-	@dontecho@$(RMRF) 3rdparty/apr/file_io/unix/.libs/ $(ERRTONULL)
-	@dontecho@$(RMRF) 3rdparty/apr/locks/unix/.libs/ $(ERRTONULL)
-	@dontecho@$(RMRF) 3rdparty/apr/memory/unix/.libs/ $(ERRTONULL)
-	@dontecho@$(RMRF) 3rdparty/apr/misc/unix/.libs/ $(ERRTONULL)
-	@dontecho@$(RMRF) 3rdparty/apr/mmap/unix/.libs/ $(ERRTONULL)
-	@dontecho@$(RMRF) 3rdparty/apr/network_io/unix/.libs/ $(ERRTONULL)
-	@dontecho@$(RMRF) 3rdparty/apr/passwd/.libs/ $(ERRTONULL)
-	@dontecho@$(RMRF) 3rdparty/apr/poll/unix/.libs/ $(ERRTONULL)
-	@dontecho@$(RMRF) 3rdparty/apr/random/unix/.libs/ $(ERRTONULL)
-	@dontecho@$(RMRF) 3rdparty/apr/shmem/unix/.libs/ $(ERRTONULL)
-	@dontecho@$(RMRF) 3rdparty/apr/strings/.libs/ $(ERRTONULL)
-	@dontecho@$(RMRF) 3rdparty/apr/support/unix/.libs/ $(ERRTONULL)
-	@dontecho@$(RMRF) 3rdparty/apr/tables/.libs/ $(ERRTONULL)
-	@dontecho@$(RMRF) 3rdparty/apr/threadproc/unix/.libs/ $(ERRTONULL)
-	@dontecho@$(RMRF) 3rdparty/apr/time/unix/.libs/ $(ERRTONULL)
-	@dontecho@$(RMRF) 3rdparty/apr/user/unix/.libs/ $(ERRTONULL)
+	@dontecho@$(RMRF) 3rdparty/libatomic_ops/src$(DIRSLASH).deps $(ERRTONULL)
+	@dontecho@$(RMRF) 3rdparty/libatomic_ops/tests$(DIRSLASH).deps $(ERRTONULL)
+	@dontecho@$(RMRF) 3rdparty/apr$(DIRSLASH).libs $(ERRTONULL)
+	@dontecho@$(RMRF) 3rdparty/apr/atomic/unix$(DIRSLASH).libs $(ERRTONULL)
+	@dontecho@$(RMRF) 3rdparty/apr/dso/unix$(DIRSLASH).libs $(ERRTONULL)
+	@dontecho@$(RMRF) 3rdparty/apr/file_io/unix$(DIRSLASH).libs $(ERRTONULL)
+	@dontecho@$(RMRF) 3rdparty/apr/locks/unix$(DIRSLASH).libs $(ERRTONULL)
+	@dontecho@$(RMRF) 3rdparty/apr/memory/unix$(DIRSLASH).libs $(ERRTONULL)
+	@dontecho@$(RMRF) 3rdparty/apr/misc/unix$(DIRSLASH).libs $(ERRTONULL)
+	@dontecho@$(RMRF) 3rdparty/apr/mmap/unix$(DIRSLASH).libs $(ERRTONULL)
+	@dontecho@$(RMRF) 3rdparty/apr/network_io/unix$(DIRSLASH).libs $(ERRTONULL)
+	@dontecho@$(RMRF) 3rdparty/apr/passwd$(DIRSLASH).libs $(ERRTONULL)
+	@dontecho@$(RMRF) 3rdparty/apr/poll/unix$(DIRSLASH).libs $(ERRTONULL)
+	@dontecho@$(RMRF) 3rdparty/apr/random/unix$(DIRSLASH).libs $(ERRTONULL)
+	@dontecho@$(RMRF) 3rdparty/apr/shmem/unix$(DIRSLASH).libs $(ERRTONULL)
+	@dontecho@$(RMRF) 3rdparty/apr/strings$(DIRSLASH).libs $(ERRTONULL)
+	@dontecho@$(RMRF) 3rdparty/apr/support/unix$(DIRSLASH).libs $(ERRTONULL)
+	@dontecho@$(RMRF) 3rdparty/apr/tables$(DIRSLASH).libs $(ERRTONULL)
+	@dontecho@$(RMRF) 3rdparty/apr/threadproc/unix$(DIRSLASH).libs $(ERRTONULL)
+	@dontecho@$(RMRF) 3rdparty/apr/time/unix$(DIRSLASH).libs $(ERRTONULL)
+	@dontecho@$(RMRF) 3rdparty/apr/user/unix$(DIRSLASH).libs $(ERRTONULL)
 	@dontecho@@mkfiledel@ $(OUTTONULL) $(ERRTONULL)
 
