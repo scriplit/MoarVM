@@ -28,6 +28,7 @@ my %BUILDDEF = (
             # Required flags
             couto       => '-o ',
             louto       => '-o ',
+            mkfiledel   => 'rm -f Makefile',
         },
   'Windows'
         # Defaults for Windows
@@ -48,6 +49,7 @@ my %BUILDDEF = (
             rmrf        => 'del /S /Q',
             cat         => 'type',
             'echo'      => 'echo',
+            mkfiledel   => 'START /B CMD /C CALL "build\delMakefile.bat"',
         },
 );
 
