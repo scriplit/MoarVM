@@ -703,7 +703,6 @@ src/strings/unicode.obj
 src/strings/utf16.obj
 src/strings/utf8.obj
 vc100.pdb
-
 3rdparty/apr/.libs/
 3rdparty/apr/.make.dirs
 3rdparty/apr/apr-1-config
