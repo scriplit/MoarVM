@@ -8,10 +8,10 @@ VERBOSE   = @verbose@
 DONTECHO  = @dontecho@
 
 # Compiler configuration
-CC       = @dontecho@@cc@
+CC       = @cc@
 CFLAGS   = @cflags@
 CINCLUDE = -I3rdparty/apr/include -I3rdparty/libatomic_ops/src -I3rdparty/libtommath/ -I3rdparty/sha1/ -Isrc -I3rdparty
-LD       = @dontecho@@link@
+LD       = @link@
 LDFLAGS  = @ldflags@
 LLIBS    = @llibs@
 COUTO    = @couto@
@@ -25,17 +25,16 @@ DOTLIB   = @dotlib@
 
 # Tool configuration
 MAKE = @make@ @nologo@
-RM   = @dontecho@@rm@
+RM   = @rm@
 RMRF = @rmrf@
-CAT  = @dontecho@@cat@
 
 # APR related
 APR_LIB = @apr_lib@
-APR_BUILD_LINE = @dontecho@@apr_build_line@
+APR_BUILD_LINE = @apr_build_line@
 
 # libatomic_ops related
 LAO_LIB = @lao_lib@
-LAO_BUILD_LINE = @dontecho@@lao_build_line@
+LAO_BUILD_LINE = @lao_build_line@
 # the following will be the same as LAO_LIB if it's to be built, otherwise blank
 BUILD_LAO_LIB = @lao_whether_build@
 

@@ -1,13 +1,3 @@
-# Editor backups
-*~
-*.bak
-
-3rdparty/apr/.libs/
-3rdparty/apr/.make.dirs
-3rdparty/apr/apr-1-config
-3rdparty/apr/apr-config.out
-3rdparty/apr/apr.exp
-3rdparty/apr/apr.pc
 3rdparty/apr/atomic/unix/.libs/
 3rdparty/apr/atomic/unix/builtins.lo
 3rdparty/apr/atomic/unix/builtins.o
@@ -27,14 +17,9 @@
 3rdparty/apr/build/x64/LibR/apr_app.obj
 3rdparty/apr/build/x64/Release/apr_app.obj
 3rdparty/apr/build/x64/Release/internal.obj
-3rdparty/apr/config.log
-3rdparty/apr/config.nice
-3rdparty/apr/config.status
 3rdparty/apr/dso/unix/.libs/
 3rdparty/apr/dso/unix/dso.lo
 3rdparty/apr/dso/unix/dso.o
-3rdparty/apr/export_vars.c
-3rdparty/apr/exports.c
 3rdparty/apr/file_io/unix/.libs/
 3rdparty/apr/file_io/unix/buffer.lo
 3rdparty/apr/file_io/unix/buffer.o
@@ -69,9 +54,7 @@
 3rdparty/apr/file_io/unix/tempdir.lo
 3rdparty/apr/file_io/unix/tempdir.o
 3rdparty/apr/include/apr.h
-3rdparty/apr/include/arch/unix/apr_private.h
 3rdparty/apr/libapr-1.la
-3rdparty/apr/libtool
 3rdparty/apr/locks/unix/.libs/
 3rdparty/apr/locks/unix/global_mutex.lo
 3rdparty/apr/locks/unix/global_mutex.o
@@ -387,17 +370,7 @@
 3rdparty/dyncall/dynload/dynload_syms.obj
 3rdparty/dyncall/dynload/libdynload_s.a
 3rdparty/dyncall/dynload/libdynload_s.lib
-3rdparty/libatomic_ops/config.log
-3rdparty/libatomic_ops/config.status
-3rdparty/libatomic_ops/pkgconfig/atomic_ops-uninstalled.pc
-3rdparty/libatomic_ops/pkgconfig/atomic_ops.pc
-3rdparty/libatomic_ops/src/.deps/
 3rdparty/libatomic_ops/src/atomic_ops.o
-3rdparty/libatomic_ops/src/config.h
-3rdparty/libatomic_ops/src/libatomic_ops.a
-3rdparty/libatomic_ops/src/stamp-h1
-3rdparty/libatomic_ops/tests/.deps/
-3rdparty/libatomic_ops/tests/list_atomic.i
 3rdparty/libtommath/bn_error.o
 3rdparty/libtommath/bn_error.obj
 3rdparty/libtommath/bn_fast_mp_invmod.o
@@ -665,7 +638,6 @@ nqp-cc/src/ops/mvmcc_ops.so
 nqp-cc/src/ops/vc100.pdb
 nqp-cc/src/vc100.pdb
 nqp-cc/temp.moarvm
-nqp-cc/temp.output
 src/6model/6model.obj
 src/6model/bootstrap.obj
 src/6model/reprconv.obj

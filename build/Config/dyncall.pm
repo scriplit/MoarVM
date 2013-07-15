@@ -16,7 +16,7 @@ sub configure {
         if ($make eq 'nmake') {
             system_or_die('@cd 3rdparty\dyncall && Configure.bat >NUL 2>NUL' . (`cl 2>&1` =~ /x64/ ? ' /target-x64' : ''));
             return (%config,
-                dyncall_build => 'cd 3rdparty\dyncall && $(MAKE) -F Nmakefile'
+                dyncall_build => 'cd 3rdparty\dyncall && nmake /F Nmakefile'
             );
         }
         else {
