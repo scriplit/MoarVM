@@ -8,7 +8,7 @@ my %BUILDDEF = (
             # Filename conventions
             exe         => '',
             o           => '.o',
-            libext      => '.a',
+            dotlib      => '.a',
             dirslash    => '/',
             outtonull   => '/dev/null',
             dontecho    => '',
@@ -38,7 +38,7 @@ my %BUILDDEF = (
             # Filename conventions
             exe         => '.exe',
             o           => '.obj',
-            libext      => '.lib',
+            dotlib      => '.lib',
             dirslash    => '\\',
             outtonull   => 'NUL',
             dontecho    => '@',
