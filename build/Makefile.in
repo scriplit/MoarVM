@@ -26,6 +26,7 @@ DOTLIB   = @dotlib@
 # Tool configuration
 MAKE = @make@ @nologo@
 RM   = @rm@
+RMRF = @rmrf@
 CAT  = @cat@
 
 # APR related
@@ -1459,4 +1460,23 @@ realclean: clean
 	@dontecho@$(RM) 3rdparty/libtommath/bn_s_mp_sub.o $(ERRTONULL)
 	@dontecho@$(RM) 3rdparty/libtommath/bncore.o $(ERRTONULL)
 	@dontecho@$(RM) 3rdparty/sha1/sha1.o $(ERRTONULL)
+	@dontecho@$(RMRF) 3rdparty/apr/.libs/ $(ERRTONULL)
+	@dontecho@$(RMRF) 3rdparty/apr/atomic/unix/.libs/ $(ERRTONULL)
+	@dontecho@$(RMRF) 3rdparty/apr/dso/unix/.libs/ $(ERRTONULL)
+	@dontecho@$(RMRF) 3rdparty/apr/file_io/unix/.libs/ $(ERRTONULL)
+	@dontecho@$(RMRF) 3rdparty/apr/locks/unix/.libs/ $(ERRTONULL)
+	@dontecho@$(RMRF) 3rdparty/apr/memory/unix/.libs/ $(ERRTONULL)
+	@dontecho@$(RMRF) 3rdparty/apr/misc/unix/.libs/ $(ERRTONULL)
+	@dontecho@$(RMRF) 3rdparty/apr/mmap/unix/.libs/ $(ERRTONULL)
+	@dontecho@$(RMRF) 3rdparty/apr/network_io/unix/.libs/ $(ERRTONULL)
+	@dontecho@$(RMRF) 3rdparty/apr/passwd/.libs/ $(ERRTONULL)
+	@dontecho@$(RMRF) 3rdparty/apr/poll/unix/.libs/ $(ERRTONULL)
+	@dontecho@$(RMRF) 3rdparty/apr/random/unix/.libs/ $(ERRTONULL)
+	@dontecho@$(RMRF) 3rdparty/apr/shmem/unix/.libs/ $(ERRTONULL)
+	@dontecho@$(RMRF) 3rdparty/apr/strings/.libs/ $(ERRTONULL)
+	@dontecho@$(RMRF) 3rdparty/apr/support/unix/.libs/ $(ERRTONULL)
+	@dontecho@$(RMRF) 3rdparty/apr/tables/.libs/ $(ERRTONULL)
+	@dontecho@$(RMRF) 3rdparty/apr/threadproc/unix/.libs/ $(ERRTONULL)
+	@dontecho@$(RMRF) 3rdparty/apr/time/unix/.libs/ $(ERRTONULL)
+	@dontecho@$(RMRF) 3rdparty/apr/user/unix/.libs/ $(ERRTONULL)
 	@dontecho@$(RM) Makefile $(ERRTONULL)
