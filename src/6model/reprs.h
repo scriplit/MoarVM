@@ -21,6 +21,7 @@
 #include "6model/reprs/MVMCallCapture.h"
 #include "6model/reprs/P6bigint.h"
 #include "6model/reprs/NFA.h"
+#include "6model/reprs/dyncall_reprs.h"
 
 /* REPR related functions. */
 void MVM_repr_initialize_registry(MVMThreadContext *tc);
@@ -29,7 +30,7 @@ MVMREPROps * MVM_repr_get_by_id(MVMThreadContext *tc, MVMuint32 id);
 MVMREPROps * MVM_repr_get_by_name(MVMThreadContext *tc, MVMString *name);
 
 /* Core representation IDs (determined by the order we add them
- * to the registery in reprs.c). */
+ * to the registry in reprs.c). */
 #define MVM_REPR_ID_MVMString               0
 #define MVM_REPR_ID_MVMArray                1
 #define MVM_REPR_ID_MVMHash                 2
@@ -52,3 +53,8 @@ MVMREPROps * MVM_repr_get_by_name(MVMThreadContext *tc, MVMString *name);
 #define MVM_REPR_ID_MVMCallCapture          19
 #define MVM_REPR_ID_P6bigint                20
 #define MVM_REPR_ID_NFA                     21
+#define MVM_REPR_ID_CArray                  22
+#define MVM_REPR_ID_CPointer                23
+#define MVM_REPR_ID_CStr                    24
+#define MVM_REPR_ID_CStruct                 25
+#define MVM_REPR_ID_NativeCall              26
