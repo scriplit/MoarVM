@@ -347,11 +347,6 @@ HEADERS   = src/moarvm.h src/6model/6model.h src/core/instance.h src/core/thread
             src/strings/latin1.h src/strings/utf16.h src/math/bigintops.h \
             3rdparty/uthash.h src/gen/config.h 3rdparty/apr/include/apr.h
 
-all: moarvm$(EXE) echodone
-	@echo moarvm$(EXE) is up-to-date.
-
-echodone:
-
 # Main target
 moarvm$(EXE): $(THIRDPARTY_LIBS) $(LIBTOMMATH_BIN) $(CORE_OBJS) $(MAIN_OBJ)
 	@dontecho@$(LD) $(LOUTO)moarvm$(EXE) $(LDFLAGS) $(CORE_OBJS) $(MAIN_OBJ) $(LIBTOMMATH_BIN) $(THIRDPARTY_LIBS) $(LLIBS) && echo moarvm$(EXE) is up-to-date.
