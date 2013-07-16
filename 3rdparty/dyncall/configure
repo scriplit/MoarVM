@@ -42,7 +42,9 @@ warning()
 
 info()
 {
-  echo "$*"
+  if [ "$CONFIG_VERBOSE" = "true" ]; then
+    echo "$*"
+  fi
 }
 
 # --- print usage -------------------------------------------------------------
@@ -91,6 +93,8 @@ usage()
   echo
   echo "  --config-release   build release version (default)"
   echo "  --config-debug     build debug version"
+  echo
+  echo "  --verbose          show config vars"
   echo
   exit 0
 }
@@ -336,6 +340,9 @@ args()
         ;;
       --config-debug)
         CONFIG_CONFIG=debug
+        ;;
+      --verbose)
+        CONFIG_VERBOSE=true
         ;;
       *)
         warning "unknown option $OPT"

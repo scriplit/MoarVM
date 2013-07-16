@@ -29,6 +29,7 @@ SET CONFIG_ARCH=x86
 SET CONFIG_TOOL=msvc
 SET CONFIG_ASM=ml
 SET CONFIG_CONFIG=release
+SET CONFIG_VERBOSE=0
 
 REM Scan arguments.
 :MAIN_LOOP
@@ -65,6 +66,8 @@ IF [%1]==[] (
 	ECHO.
 	ECHO.  /config-release   build release version ^(default^)
 	ECHO.  /config-debug     build debug version
+    ECHO.
+    ECHO.  /verbose          output configure result
 	GOTO:EOF
 ) ELSE IF [%1]==[/prefix] (
 	SET CONFIG_PREFIX=%2
@@ -101,6 +104,8 @@ IF [%1]==[] (
 	SET CONFIG_CONFIG=release
 ) ELSE IF [%1]==[/config-debug] (
 	SET CONFIG_CONFIG=debug
+) ELSE IF [%1]==[/verbose] (
+	SET CONFIG_VERBOSE=true
 ) ELSE (
 	ECHO Unknown parameter '%1'.
 	GOTO DONE
@@ -130,17 +135,18 @@ ECHO CONFIG_BUILDPREFIX=%CONFIG_BUILDPREFIX%#>>ConfigVars
 ECHO RM=del#>>ConfigVars
 ECHO SLASH=\\#>>ConfigVars
 
-ECHO Writing following configuration to ConfigVars:
-ECHO.
-ECHO Host OS:             %CONFIG_HOST%
-ECHO Target OS:           %CONFIG_OS%
-ECHO Target Architecture: %CONFIG_ARCH%
-ECHO Compiler:            %CONFIG_TOOL%
-ECHO Assembler:           %CONFIG_ASM%
-ECHO Build configuration: %CONFIG_CONFIG%
-ECHO Install prefix:      %CONFIG_PREFIX%
-ECHO Build prefix:        %CONFIG_BUILDPREFIX%
-
+IF [%CONFIG_VERBOSE%]==[true] (
+    ECHO Writing following configuration to ConfigVars:
+    ECHO.
+    ECHO Host OS:             %CONFIG_HOST%
+    ECHO Target OS:           %CONFIG_OS%
+    ECHO Target Architecture: %CONFIG_ARCH%
+    ECHO Compiler:            %CONFIG_TOOL%
+    ECHO Assembler:           %CONFIG_ASM%
+    ECHO Build configuration: %CONFIG_CONFIG%
+    ECHO Install prefix:      %CONFIG_PREFIX%
+    ECHO Build prefix:        %CONFIG_BUILDPREFIX%
+)
 
 REM We have to transform some pathes for the nds/devkitPro build.
 IF [%CONFIG_OS%]==[nds] (
