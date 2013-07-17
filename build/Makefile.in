@@ -27,6 +27,7 @@ DOTLIB   = @dotlib@
 MAKE = @make@ @nologo@
 RM   = @rm@
 RMRF = @rmrf@
+CAT  = @cat@
 
 # APR related
 APR_LIB = @apr_lib@
