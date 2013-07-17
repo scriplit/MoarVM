@@ -374,8 +374,7 @@ test:
 
 # Generated unicode database
 src/strings/unicode.c: src/strings/unicode_db.c src/strings/unicode_ops.c
-	@dontecho@$(CAT) src/strings/unicode_db.c >src/strings/unicode.c
-	@dontecho@$(CAT) src/strings/unicode_ops.c >>src/strings/unicode.c
+	@dontecho@$(CAT) src/strings/unicode_db.c src/strings/unicode_ops.c >src/strings/unicode.c
 
 # libtommath
 $(TOM)core$(O): $(TOM)core.c $(LIBTOMMATH_H)
