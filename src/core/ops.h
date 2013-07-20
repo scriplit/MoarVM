@@ -185,6 +185,8 @@
 #define MVM_OP_lexprimspec 171
 #define MVM_OP_ceil_n 172
 #define MVM_OP_floor_n 173
+#define MVM_OP_assign 174
+#define MVM_OP_assignunchecked 175
 
 /* Op name defines for bank dev. */
 #define MVM_OP_sleep 0
@@ -299,6 +301,9 @@
 #define MVM_OP_isbig_I 51
 #define MVM_OP_base_I 52
 #define MVM_OP_radix_I 53
+#define MVM_OP_div_In 54
+#define MVM_OP_log_n 55
+#define MVM_OP_exp_n 56
 
 /* Op name defines for bank object. */
 #define MVM_OP_knowhow 0
@@ -433,6 +438,8 @@
 #define MVM_OP_hlllist 129
 #define MVM_OP_hllhash 130
 #define MVM_OP_attrinited 131
+#define MVM_OP_setcontspec 132
+#define MVM_OP_existspos 133
 
 /* Op name defines for bank io. */
 #define MVM_OP_copy_f 0

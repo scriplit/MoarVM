@@ -1156,6 +1156,17 @@ QAST::MASTOperations.add_core_op('bind', -> $qastcomp, $op {
 # Exception handling/munging.
 QAST::MASTOperations.add_core_moarop_mapping('die', 'die');
 QAST::MASTOperations.add_core_moarop_mapping('die_s', 'die');
+QAST::MASTOperations.add_core_moarop_mapping('exception', 'exception');
+QAST::MASTOperations.add_core_moarop_mapping('getextype', 'getexcategory');
+QAST::MASTOperations.add_core_moarop_mapping('setextype', 'bindexcategory', 1);
+QAST::MASTOperations.add_core_moarop_mapping('getpayload', 'getexpayload');
+QAST::MASTOperations.add_core_moarop_mapping('setpayload', 'bindexpayload', 1);
+QAST::MASTOperations.add_core_moarop_mapping('getmessage', 'getexmessage');
+QAST::MASTOperations.add_core_moarop_mapping('setmessage', 'bindexmessage', 1);
+QAST::MASTOperations.add_core_moarop_mapping('newexception', 'newexception');
+# XXX backtrace, backtracestrings
+QAST::MASTOperations.add_core_moarop_mapping('throw', 'throwdyn');
+# XXX rethrow, resume, handle
 
 # Control exception throwing.
 my %control_map := nqp::hash(
@@ -1318,7 +1329,7 @@ QAST::MASTOperations.add_core_moarop_mapping('mul_I', 'mul_I');
 QAST::MASTOperations.add_core_moarop_mapping('mul_n', 'mul_n');
 QAST::MASTOperations.add_core_moarop_mapping('div_i', 'div_i');
 QAST::MASTOperations.add_core_moarop_mapping('div_I', 'div_I');
-#QAST::MASTOperations.add_core_moarop_mapping('div_In', 'nqp_bigint_div_num', 'NPP');
+QAST::MASTOperations.add_core_moarop_mapping('div_In', 'div_In');
 QAST::MASTOperations.add_core_moarop_mapping('div_n', 'div_n');
 QAST::MASTOperations.add_core_moarop_mapping('mod_i', 'mod_i');
 QAST::MASTOperations.add_core_moarop_mapping('mod_I', 'mod_I');
@@ -1334,17 +1345,22 @@ QAST::MASTOperations.add_core_moarop_mapping('abs_I', 'abs_I');
 QAST::MASTOperations.add_core_moarop_mapping('abs_n', 'abs_n');
 QAST::MASTOperations.add_core_moarop_mapping('ceil_n', 'ceil_n');
 QAST::MASTOperations.add_core_moarop_mapping('floor_n', 'floor_n');
-#QAST::MASTOperations.add_core_moarop_mapping('ln_n', 'ln', 'Nn');
+QAST::MASTOperations.add_core_moarop_mapping('ln_n', 'log_n'); # looks like this one is never used
 QAST::MASTOperations.add_core_moarop_mapping('sqrt_n', 'sqrt_n');
+QAST::MASTOperations.add_core_moarop_mapping('base_I', 'base_I');
 QAST::MASTOperations.add_core_moarop_mapping('radix', 'radix');
-#QAST::MASTOperations.add_core_moarop_mapping('radix_I', 'nqp_bigint_radix', 'PisiiP');
-#QAST::MASTOperations.add_core_moarop_mapping('log_n', 'ln', 'NN');
-#QAST::MASTOperations.add_core_moarop_mapping('exp_n', 'exp', 'Nn');
+QAST::MASTOperations.add_core_moarop_mapping('radix_I', 'radix_I');
+QAST::MASTOperations.add_core_moarop_mapping('log_n', 'log_n');
+QAST::MASTOperations.add_core_moarop_mapping('exp_n', 'exp_n');
 #QAST::MASTOperations.add_core_moarop_mapping('isnanorinf', 'is_inf_or_nan', 'In');
+QAST::MASTOperations.add_core_moarop_mapping('isprime_I', 'isprime_I');
+QAST::MASTOperations.add_core_moarop_mapping('rand_I', 'rand_I');
 
-# bigint <-> string conversions
+# bigint <-> string/num conversions
 QAST::MASTOperations.add_core_moarop_mapping('tostr_I', 'coerce_Is');
 QAST::MASTOperations.add_core_moarop_mapping('fromstr_I', 'coerce_sI');
+QAST::MASTOperations.add_core_moarop_mapping('tonum_I', 'coerce_In');
+QAST::MASTOperations.add_core_moarop_mapping('fromnum_I', 'coerce_nI');
 
 # trig opcodes
 QAST::MASTOperations.add_core_moarop_mapping('sin_n', 'sin_n');
@@ -1504,6 +1520,7 @@ QAST::MASTOperations.add_core_moarop_mapping('existskey', 'existskey');
 QAST::MASTOperations.add_core_moarop_mapping('deletekey', 'deletekey');
 QAST::MASTOperations.add_core_moarop_mapping('elems', 'elems');
 QAST::MASTOperations.add_core_moarop_mapping('setelems', 'setelemspos', 0);
+QAST::MASTOperations.add_core_moarop_mapping('existspos', 'existspos');
 QAST::MASTOperations.add_core_moarop_mapping('push', 'push_o', 1);
 QAST::MASTOperations.add_core_moarop_mapping('push_i', 'push_i', 1);
 QAST::MASTOperations.add_core_moarop_mapping('push_n', 'push_n', 1);
@@ -1585,6 +1602,9 @@ QAST::MASTOperations.add_core_moarop_mapping('setmethcacheauth', 'setmethcacheau
 QAST::MASTOperations.add_core_moarop_mapping('settypecache', 'settypecache', 0);
 QAST::MASTOperations.add_core_moarop_mapping('isinvokable', 'isinvokable');
 QAST::MASTOperations.add_core_moarop_mapping('setinvokespec', 'setinvokespec', 0);
+QAST::MASTOperations.add_core_moarop_mapping('setcontspec', 'setcontspec', 0);
+QAST::MASTOperations.add_core_moarop_mapping('assign', 'assign', 0);
+QAST::MASTOperations.add_core_moarop_mapping('assignunchecked', 'assignunchecked', 0);
 
 # defined - overridden by HLL, but by default same as .DEFINITE.
 QAST::MASTOperations.add_core_moarop_mapping('defined', 'isconcrete');

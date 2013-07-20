@@ -13,10 +13,12 @@ static void verify_filehandle_type(MVMThreadContext *tc, MVMObject *oshandle, MV
     }
 }
 
-apr_finfo_t * MVM_file_info(MVMThreadContext *tc, apr_finfo_t *finfo, MVMString *filename, apr_int32_t wanted) {
+static apr_finfo_t MVM_file_info(MVMThreadContext *tc, MVMString *filename, apr_int32_t wanted) {
     apr_status_t rv;
     apr_pool_t *tmp_pool;
     apr_file_t *file_handle;
+    apr_finfo_t finfo;
+
     char *fname = MVM_string_utf8_encode_C_string(tc, filename);
     
     /* need a temporary pool */
@@ -33,7 +35,7 @@ apr_finfo_t * MVM_file_info(MVMThreadContext *tc, apr_finfo_t *finfo, MVMString 
     
     free(fname);
     
-    if((rv = apr_file_info_get(finfo, wanted, file_handle)) != APR_SUCCESS) {
+    if((rv = apr_file_info_get(&finfo, wanted, file_handle)) != APR_SUCCESS) {
         MVM_exception_throw_apr_error(tc, rv, "Failed to stat file: ");
     }
     
@@ -46,28 +48,27 @@ apr_finfo_t * MVM_file_info(MVMThreadContext *tc, apr_finfo_t *finfo, MVMString 
 
 MVMint64 MVM_file_stat(MVMThreadContext *tc, MVMString *fn, MVMint64 status) {
     MVMint64 r = -1;
-    apr_finfo_t finfo;
 
     switch (status) {
         case MVM_stat_exists:             r = MVM_file_exists(tc, fn); break;
-        case MVM_stat_filesize:           r = MVM_file_info(tc, &finfo, fn, APR_FINFO_SIZE)->size; break;
-        case MVM_stat_isdir:              r = MVM_file_info(tc, &finfo, fn, APR_FINFO_TYPE)->filetype & APR_DIR ? 1 : 0; break;
-        case MVM_stat_isreg:              r = MVM_file_info(tc, &finfo, fn, APR_FINFO_TYPE)->filetype & APR_REG ? 1 : 0; break;
-        case MVM_stat_isdev:              r = MVM_file_info(tc, &finfo, fn, APR_FINFO_TYPE)->filetype & (APR_CHR|APR_BLK) ? 1 : 0; break;
-        case MVM_stat_createtime:         r = MVM_file_info(tc, &finfo, fn, APR_FINFO_CTIME)->ctime; break;
-        case MVM_stat_accesstime:         r = MVM_file_info(tc, &finfo, fn, APR_FINFO_ATIME)->atime; break;
-        case MVM_stat_modifytime:         r = MVM_file_info(tc, &finfo, fn, APR_FINFO_MTIME)->mtime; break;
-        case MVM_stat_changetime:         r = MVM_file_info(tc, &finfo, fn, APR_FINFO_CTIME)->ctime; break;
+        case MVM_stat_filesize:           r = MVM_file_info(tc, fn, APR_FINFO_SIZE).size; break;
+        case MVM_stat_isdir:              r = MVM_file_info(tc, fn, APR_FINFO_TYPE).filetype & APR_DIR ? 1 : 0; break;
+        case MVM_stat_isreg:              r = MVM_file_info(tc, fn, APR_FINFO_TYPE).filetype & APR_REG ? 1 : 0; break;
+        case MVM_stat_isdev:              r = MVM_file_info(tc, fn, APR_FINFO_TYPE).filetype & (APR_CHR|APR_BLK) ? 1 : 0; break;
+        case MVM_stat_createtime:         r = MVM_file_info(tc, fn, APR_FINFO_CTIME).ctime; break;
+        case MVM_stat_accesstime:         r = MVM_file_info(tc, fn, APR_FINFO_ATIME).atime; break;
+        case MVM_stat_modifytime:         r = MVM_file_info(tc, fn, APR_FINFO_MTIME).mtime; break;
+        case MVM_stat_changetime:         r = MVM_file_info(tc, fn, APR_FINFO_CTIME).ctime; break;
         case MVM_stat_backuptime:         r = -1; break;
-        case MVM_stat_uid:                r = MVM_file_info(tc, &finfo, fn, APR_FINFO_USER)->user; break;
-        case MVM_stat_gid:                r = MVM_file_info(tc, &finfo, fn, APR_FINFO_GROUP)->group; break;
-        case MVM_stat_islnk:              r = MVM_file_info(tc, &finfo, fn, APR_FINFO_TYPE)->filetype & APR_LNK ? 1 : 0; break;
-        case MVM_stat_platform_dev:       r = MVM_file_info(tc, &finfo, fn, APR_FINFO_DEV)->device; break;
-        case MVM_stat_platform_inode:     r = MVM_file_info(tc, &finfo, fn, APR_FINFO_INODE)->inode; break;
-        case MVM_stat_platform_mode:      r = MVM_file_info(tc, &finfo, fn, APR_FINFO_PROT)->protection; break;
-        case MVM_stat_platform_nlinks:    r = MVM_file_info(tc, &finfo, fn, APR_FINFO_NLINK)->nlink; break;
+        case MVM_stat_uid:                r = MVM_file_info(tc, fn, APR_FINFO_USER).user; break;
+        case MVM_stat_gid:                r = MVM_file_info(tc, fn, APR_FINFO_GROUP).group; break;
+        case MVM_stat_islnk:              r = MVM_file_info(tc, fn, APR_FINFO_TYPE).filetype & APR_LNK ? 1 : 0; break;
+        case MVM_stat_platform_dev:       r = MVM_file_info(tc, fn, APR_FINFO_DEV).device; break;
+        case MVM_stat_platform_inode:     r = MVM_file_info(tc, fn, APR_FINFO_INODE).inode; break;
+        case MVM_stat_platform_mode:      r = MVM_file_info(tc, fn, APR_FINFO_PROT).protection; break;
+        case MVM_stat_platform_nlinks:    r = MVM_file_info(tc, fn, APR_FINFO_NLINK).nlink; break;
         case MVM_stat_platform_devtype:   r = -1; break;
-        case MVM_stat_platform_blocksize: r = MVM_file_info(tc, &finfo, fn, APR_FINFO_CSIZE)->csize; break;
+        case MVM_stat_platform_blocksize: r = MVM_file_info(tc, fn, APR_FINFO_CSIZE).csize; break;
         case MVM_stat_platform_blocks:    r = -1; break;
         default: break;
     }
@@ -165,7 +166,7 @@ void MVM_file_rename(MVMThreadContext *tc, MVMString *src, MVMString *dest) {
 
 void MVM_file_delete(MVMThreadContext *tc, MVMString *f) {
     apr_status_t rv;
-    const char *a;
+    char *a;
     apr_pool_t *tmp_pool;
     
     /* need a temporary pool */
@@ -173,14 +174,16 @@ void MVM_file_delete(MVMThreadContext *tc, MVMString *f) {
         MVM_exception_throw_apr_error(tc, rv, "Failed to delete file: ");
     }
     
-    a = (const char *) MVM_string_utf8_encode_C_string(tc, f);
+    a = MVM_string_utf8_encode_C_string(tc, f);
     
     /* 720002 means file wasn't there on windows, 2 on linux...  */
     /* TODO find defines for these and make it os-specific */
-    if ((rv = apr_file_remove(a, tmp_pool)) != APR_SUCCESS && rv != 720002 && rv != 2) {
+    if ((rv = apr_file_remove((const char *)a, tmp_pool)) != APR_SUCCESS && rv != 720002 && rv != 2) {
+        free(a);
         apr_pool_destroy(tmp_pool);
         MVM_exception_throw_apr_error(tc, rv, "Failed to delete file: ");
     }
+    free(a);
     apr_pool_destroy(tmp_pool);
 }
 
@@ -189,13 +192,15 @@ void MVM_file_delete(MVMThreadContext *tc, MVMString *f) {
  * XXX TODO: accept bits by perl format instead...? */
 void MVM_file_chmod(MVMThreadContext *tc, MVMString *f, MVMint64 flag) {
     apr_status_t rv;
-    const char *a;
+    char *a;
     
-    a = (const char *) MVM_string_utf8_encode_C_string(tc, f);
+    a = MVM_string_utf8_encode_C_string(tc, f);
     
-    if ((rv = apr_file_perms_set(a, (apr_fileperms_t)flag)) != APR_SUCCESS) {
+    if ((rv = apr_file_perms_set((const char *)a, (apr_fileperms_t)flag)) != APR_SUCCESS) {
+        free(a);
         MVM_exception_throw_apr_error(tc, rv, "Failed to set permissions on path: ");
     }
+    free(a);
 }
 
 MVMint64 MVM_file_exists(MVMThreadContext *tc, MVMString *f) {
@@ -226,15 +231,18 @@ MVMObject * MVM_file_open_fh(MVMThreadContext *tc, MVMString *filename, MVMStrin
     apr_pool_t *tmp_pool;
     apr_file_t *file_handle;
     apr_int32_t flag;
+    MVMObject *type_object = tc->instance->boot_types->BOOTIO;
     char *fname = MVM_string_utf8_encode_C_string(tc, filename);
-    char *fmode = MVM_string_utf8_encode_C_string(tc, mode);
+    char *fmode;
     
     /* need a temporary pool */
     if ((rv = apr_pool_create(&tmp_pool, POOL(tc))) != APR_SUCCESS) {
         free(fname);
         MVM_exception_throw_apr_error(tc, rv, "Open file failed to create pool: ");
     }
-    
+
+    fmode = MVM_string_utf8_encode_C_string(tc, mode);
+
     /* generate apr compatible open mode flags */
     if (0 == strcmp("r", fmode))
         flag = APR_FOPEN_READ;
@@ -248,12 +256,13 @@ MVMObject * MVM_file_open_fh(MVMThreadContext *tc, MVMString *filename, MVMStrin
     /* try to open the file */
     if ((rv = apr_file_open(&file_handle, (const char *)fname, flag, APR_OS_DEFAULT, tmp_pool)) != APR_SUCCESS) {
         free(fname);
+        free(fmode);
         apr_pool_destroy(tmp_pool);
         MVM_exception_throw_apr_error(tc, rv, "Failed to open file: ");
     }
     
     /* initialize the object */
-    result = (MVMOSHandle *)REPR(tc->instance->boot_types->BOOTIO)->allocate(tc, STABLE(tc->instance->boot_types->BOOTIO));
+    result = (MVMOSHandle *)REPR(type_object)->allocate(tc, STABLE(type_object));
     
     result->body.file_handle = file_handle;
     result->body.handle_type = MVM_OSHANDLE_FILE;
@@ -261,7 +270,7 @@ MVMObject * MVM_file_open_fh(MVMThreadContext *tc, MVMString *filename, MVMStrin
     result->body.encoding_type = MVM_encoding_type_utf8;
     
     free(fname);
-    
+    free(fmode);
     return (MVMObject *)result;
 }
 
@@ -410,8 +419,9 @@ MVMString * MVM_file_readall_fh(MVMThreadContext *tc, MVMObject *oshandle) {
 MVMString * MVM_file_slurp(MVMThreadContext *tc, MVMString *filename, MVMString *encoding) {
     MVMString *mode = MVM_string_utf8_decode(tc, tc->instance->VMString, "r", 1);
     MVMObject *oshandle = (MVMObject *)MVM_file_open_fh(tc, filename, mode);
+    MVMString *result;
     MVM_file_set_encoding(tc, oshandle, encoding);
-    MVMString *result = MVM_file_readall_fh(tc, oshandle);
+    result = MVM_file_readall_fh(tc, oshandle);
     MVM_file_close_fh(tc, oshandle);
     
     return result;
@@ -563,12 +573,6 @@ static MVMObject * MVM_file_get_stdstream(MVMThreadContext *tc, MVMuint8 type) {
     apr_file_t  *handle;
     apr_status_t rv;
     MVMObject *type_object = tc->instance->boot_types->BOOTIO;
-    MVMint64 encoding_flag = 1;
-    ENCODING_VALID(encoding_flag);
-    
-    if (REPR(type_object)->ID != MVM_REPR_ID_MVMOSHandle || IS_CONCRETE(type_object)) {
-        MVM_exception_throw_adhoc(tc, "Open stream needs a type object with MVMOSHandle REPR");
-    }
     
     result = (MVMOSHandle *)REPR(type_object)->allocate(tc, STABLE(type_object));
     
@@ -590,7 +594,7 @@ static MVMObject * MVM_file_get_stdstream(MVMThreadContext *tc, MVMuint8 type) {
     }
     result->body.file_handle = handle;
     result->body.handle_type = MVM_OSHANDLE_FILE;
-    result->body.encoding_type = encoding_flag;
+    result->body.encoding_type = MVM_encoding_type_utf8;
     
     return (MVMObject *)result;
 }
@@ -619,7 +623,6 @@ void MVM_file_set_encoding(MVMThreadContext *tc, MVMObject *oshandle, MVMString 
     MVMOSHandle *handle;
     MVMuint8 encoding_flag = MVM_find_encoding_by_name(tc, encoding_name);
 
-    ENCODING_VALID(encoding_flag);
     verify_filehandle_type(tc, oshandle, &handle, "setencoding");
 
     handle->body.encoding_type = encoding_flag;

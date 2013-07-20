@@ -736,7 +736,7 @@ MVMObject * MVM_string_split(MVMThreadContext *tc, MVMString *separator, MVMStri
                     can reset the index of what it's comparing... <!> */
                 index = MVM_string_index(tc, input, separator, start);
                 length = sep_length ? (index == -1 ? end : index) - start : 1;
-                if (length > 0 || sep_length && length == 0) {
+                if (length > 0 || (sep_length && length == 0)) {
                     portion = MVM_string_substring(tc, input, start, length);
                     MVMROOT(tc, portion, {
                         MVMObject *pobj = MVM_repr_alloc_init(tc, hll->str_box_type);
@@ -780,7 +780,7 @@ MVMString * MVM_string_join(MVMThreadContext *tc, MVMString *separator, MVMObjec
     
     MVMROOT(tc, separator, {
     MVMROOT(tc, input, {
-        result = (MVMString *)MVM_repr_alloc_init(tc, separator);
+        result = (MVMString *)MVM_repr_alloc_init(tc, (MVMObject *)separator);
         MVMROOT(tc, result, {
             elems = REPR(input)->elems(tc, STABLE(input),
                 input, OBJECT_BODY(input));
@@ -1023,7 +1023,7 @@ MVMString * MVM_string_flip(MVMThreadContext *tc, MVMString *s) {
 
 /* Compares two strings, returning -1, 0 or 1 to indicate less than,
  * equal or greater than. */
-MVMint16 MVM_string_compare(MVMThreadContext *tc, MVMString *a, MVMString *b) {
+MVMint64 MVM_string_compare(MVMThreadContext *tc, MVMString *a, MVMString *b) {
     MVMStringIndex alen = NUM_GRAPHS(a);
     MVMStringIndex blen = NUM_GRAPHS(b);
     MVMStringIndex i, scanlen;

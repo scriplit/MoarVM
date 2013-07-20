@@ -1007,24 +1007,50 @@ void MVM_interp_run(MVMThreadContext *tc, void (*initial_invoke)(MVMThreadContex
                         cur_op += 6;
                         break;
                     }
-                    case MVM_OP_ceil_n:
-                        {
-                            MVMnum64 num = GET_REG(cur_op, 2).n64;
-                            MVMint64 abs = (MVMint64)num;
-                            if (num > abs) num = ++abs;
-                            GET_REG(cur_op, 0).i64 = num;
-                            cur_op += 4;
+                    case MVM_OP_ceil_n:{
+                        MVMnum64 num = GET_REG(cur_op, 2).n64;
+                        MVMint64 abs = (MVMint64)num;
+                        if (num > abs) num = ++abs;
+                        GET_REG(cur_op, 0).i64 = num;
+                        cur_op += 4;
+                        break;
+                    }
+                    case MVM_OP_floor_n: {
+                        MVMnum64 num = GET_REG(cur_op, 2).n64;
+                        MVMint64 abs = (MVMint64)num;
+                        if (num < abs) num = --abs;
+                        GET_REG(cur_op, 0).i64 = num;
+                        cur_op += 4;
+                        break;
+                    }
+                    case MVM_OP_assign: {
+                        MVMObject *cont  = GET_REG(cur_op, 0).o;
+                        MVMObject *obj = GET_REG(cur_op, 2).o;
+                        MVMContainerSpec *spec = STABLE(cont)->container_spec;
+                        MVMRegister value;
+                        cur_op += 4;
+                        if (spec) {
+                            DECONT(tc, obj, value);
+                            spec->store(tc, cont, value.o);
+                        } else {
+                            MVM_exception_throw_adhoc(tc, "Cannot assign to an immutable value");
                         }
                         break;
-                    case MVM_OP_floor_n:
-                        {
-                            MVMnum64 num = GET_REG(cur_op, 2).n64;
-                            MVMint64 abs = (MVMint64)num;
-                            if (num < abs) num = --abs;
-                            GET_REG(cur_op, 0).i64 = num;
-                            cur_op += 4;
+                    }
+                    case MVM_OP_assignunchecked: {
+                        MVMObject *cont  = GET_REG(cur_op, 0).o;
+                        MVMObject *obj = GET_REG(cur_op, 2).o;
+                        MVMContainerSpec *spec = STABLE(cont)->container_spec;
+                        MVMRegister value;
+                        cur_op += 4;
+                        if (spec) {
+                            DECONT(tc, obj, value);
+                            spec->store_unchecked(tc, cont, value.o);
+                        } else {
+                            MVM_exception_throw_adhoc(tc, "Cannot assign to an immutable value");
                         }
                         break;
+                    }
                     default: {
                         MVM_panic(MVM_exitcode_invalidopcode, "Invalid opcode executed (corrupt bytecode stream?) bank %u opcode %u",
                                 MVM_OP_BANK_primitives, *(cur_op-1));
@@ -1398,7 +1424,7 @@ void MVM_interp_run(MVMThreadContext *tc, void (*initial_invoke)(MVMThreadContex
                         MVMROOT(tc, a, {
                             MVMROOT(tc, type, {
                                 MVMObject *b = MVM_repr_alloc_init(tc, type);
-                                MVM_bigint_abs(b, a);
+                                MVM_bigint_abs(tc, b, a);
                                 GET_REG(cur_op, 0).o = b;
                             });
                         });
@@ -1410,7 +1436,7 @@ void MVM_interp_run(MVMThreadContext *tc, void (*initial_invoke)(MVMThreadContex
                         MVMROOT(tc, a, {
                             MVMROOT(tc, type, {
                                 MVMObject *b = MVM_repr_alloc_init(tc, type);
-                                MVM_bigint_neg(b, a);
+                                MVM_bigint_neg(tc, b, a);
                                 GET_REG(cur_op, 0).o = b;
                             });
                         });
@@ -1423,7 +1449,7 @@ void MVM_interp_run(MVMThreadContext *tc, void (*initial_invoke)(MVMThreadContex
                             MVMROOT(tc, b, {
                                 MVMROOT(tc, type, {
                                     MVMObject *c = MVM_repr_alloc_init(tc, type);
-                                    MVM_bigint_add(c, a, b);
+                                    MVM_bigint_add(tc, c, a, b);
                                     GET_REG(cur_op, 0).o = c;
                                 });
                             });
@@ -1437,7 +1463,7 @@ void MVM_interp_run(MVMThreadContext *tc, void (*initial_invoke)(MVMThreadContex
                             MVMROOT(tc, b, {
                                 MVMROOT(tc, type, {
                                     MVMObject *c = MVM_repr_alloc_init(tc, type);
-                                    MVM_bigint_sub(c, a, b);
+                                    MVM_bigint_sub(tc, c, a, b);
                                     GET_REG(cur_op, 0).o = c;
                                 });
                             });
@@ -1451,7 +1477,7 @@ void MVM_interp_run(MVMThreadContext *tc, void (*initial_invoke)(MVMThreadContex
                             MVMROOT(tc, b, {
                                 MVMROOT(tc, type, {
                                     MVMObject *c = MVM_repr_alloc_init(tc, type);
-                                    MVM_bigint_mul(c, a, b);
+                                    MVM_bigint_mul(tc, c, a, b);
                                     GET_REG(cur_op, 0).o = c;
                                 });
                             });
@@ -1465,7 +1491,7 @@ void MVM_interp_run(MVMThreadContext *tc, void (*initial_invoke)(MVMThreadContex
                             MVMROOT(tc, b, {
                                 MVMROOT(tc, type, {
                                     MVMObject *c = MVM_repr_alloc_init(tc, type);
-                                    MVM_bigint_div(c, a, b);
+                                    MVM_bigint_div(tc, c, a, b);
                                     GET_REG(cur_op, 0).o = c;
                                 });
                             });
@@ -1479,7 +1505,7 @@ void MVM_interp_run(MVMThreadContext *tc, void (*initial_invoke)(MVMThreadContex
                             MVMROOT(tc, b, {
                                 MVMROOT(tc, type, {
                                     MVMObject *c = MVM_repr_alloc_init(tc, type);
-                                    MVM_bigint_mod(c, a, b);
+                                    MVM_bigint_mod(tc, c, a, b);
                                     GET_REG(cur_op, 0).o = c;
                                 });
                             });
@@ -1494,7 +1520,7 @@ void MVM_interp_run(MVMThreadContext *tc, void (*initial_invoke)(MVMThreadContex
                                 MVMROOT(tc, c, {
                                     MVMROOT(tc, type, {
                                         MVMObject *d = MVM_repr_alloc_init(tc, type);
-                                        MVM_bigint_expmod(d, a, b, c);
+                                        MVM_bigint_expmod(tc, d, a, b, c);
                                         GET_REG(cur_op, 0).o = d;
                                     });
                                 });
@@ -1509,7 +1535,7 @@ void MVM_interp_run(MVMThreadContext *tc, void (*initial_invoke)(MVMThreadContex
                             MVMROOT(tc, b, {
                                 MVMROOT(tc, type, {
                                     MVMObject *c = MVM_repr_alloc_init(tc, type);
-                                    MVM_bigint_gcd(c, a, b);
+                                    MVM_bigint_gcd(tc, c, a, b);
                                     GET_REG(cur_op, 0).o = c;
                                 });
                             });
@@ -1523,7 +1549,7 @@ void MVM_interp_run(MVMThreadContext *tc, void (*initial_invoke)(MVMThreadContex
                             MVMROOT(tc, b, {
                                 MVMROOT(tc, type, {
                                     MVMObject *c = MVM_repr_alloc_init(tc, type);
-                                    MVM_bigint_lcm(c, a, b);
+                                    MVM_bigint_lcm(tc, c, a, b);
                                     GET_REG(cur_op, 0).o = c;
                                 });
                             });
@@ -1537,7 +1563,7 @@ void MVM_interp_run(MVMThreadContext *tc, void (*initial_invoke)(MVMThreadContex
                             MVMROOT(tc, b, {
                                 MVMROOT(tc, type, {
                                     MVMObject *c = MVM_repr_alloc_init(tc, type);
-                                    MVM_bigint_or(c, a, b);
+                                    MVM_bigint_or(tc, c, a, b);
                                     GET_REG(cur_op, 0).o = c;
                                 });
                             });
@@ -1551,7 +1577,7 @@ void MVM_interp_run(MVMThreadContext *tc, void (*initial_invoke)(MVMThreadContex
                             MVMROOT(tc, b, {
                                 MVMROOT(tc, type, {
                                     MVMObject *c = MVM_repr_alloc_init(tc, type);
-                                    MVM_bigint_xor(c, a, b);
+                                    MVM_bigint_xor(tc, c, a, b);
                                     GET_REG(cur_op, 0).o = c;
                                 });
                             });
@@ -1565,7 +1591,7 @@ void MVM_interp_run(MVMThreadContext *tc, void (*initial_invoke)(MVMThreadContex
                             MVMROOT(tc, b, {
                                 MVMROOT(tc, type, {
                                     MVMObject *c = MVM_repr_alloc_init(tc, type);
-                                    MVM_bigint_and(c, a, b);
+                                    MVM_bigint_and(tc, c, a, b);
                                     GET_REG(cur_op, 0).o = c;
                                 });
                             });
@@ -1578,7 +1604,7 @@ void MVM_interp_run(MVMThreadContext *tc, void (*initial_invoke)(MVMThreadContex
                         MVMROOT(tc, a, {
                             MVMROOT(tc, type, {
                                 MVMObject *b = MVM_repr_alloc_init(tc, type);
-                                MVM_bigint_not(b, a);
+                                MVM_bigint_not(tc, b, a);
                                 GET_REG(cur_op, 0).o = b;
                             });
                         });
@@ -1591,7 +1617,7 @@ void MVM_interp_run(MVMThreadContext *tc, void (*initial_invoke)(MVMThreadContex
                         MVMROOT(tc, a, {
                             MVMROOT(tc, type, {
                                 MVMObject *c = MVM_repr_alloc_init(tc, type);
-                                MVM_bigint_shl(c, a, b);
+                                MVM_bigint_shl(tc, c, a, b);
                                 GET_REG(cur_op, 0).o = c;
                             });
                         });
@@ -1604,7 +1630,7 @@ void MVM_interp_run(MVMThreadContext *tc, void (*initial_invoke)(MVMThreadContex
                         MVMROOT(tc, a, {
                             MVMROOT(tc, type, {
                                 MVMObject *c = MVM_repr_alloc_init(tc, type);
-                                MVM_bigint_shr(c, a, b);
+                                MVM_bigint_shr(tc, c, a, b);
                                 GET_REG(cur_op, 0).o = c;
                             });
                         });
@@ -1617,7 +1643,7 @@ void MVM_interp_run(MVMThreadContext *tc, void (*initial_invoke)(MVMThreadContex
                             MVMROOT(tc, b, {
                                 MVMROOT(tc, type, {
                                     MVMObject *c = MVM_repr_alloc_init(tc, type);
-                                    MVM_bigint_pow(c, a, b);
+                                    MVM_bigint_pow(tc, c, a, b);
                                     GET_REG(cur_op, 0).o = c;
                                 });
                             });
@@ -1627,54 +1653,87 @@ void MVM_interp_run(MVMThreadContext *tc, void (*initial_invoke)(MVMThreadContex
                     }
                     case MVM_OP_cmp_I: {
                         MVMObject *a = GET_REG(cur_op, 2).o, *b = GET_REG(cur_op, 4).o;
-                        GET_REG(cur_op, 0).i64 = MVM_bigint_cmp(a, b);
+                        GET_REG(cur_op, 0).i64 = MVM_bigint_cmp(tc, a, b);
                         cur_op += 6;
                         break;
                     }
                     case MVM_OP_eq_I: {
                         MVMObject *a = GET_REG(cur_op, 2).o, *b = GET_REG(cur_op, 4).o;
-                        GET_REG(cur_op, 0).i64 = MP_EQ == MVM_bigint_cmp(a, b);
+                        GET_REG(cur_op, 0).i64 = MP_EQ == MVM_bigint_cmp(tc, a, b);
                         cur_op += 6;
                         break;
                     }
                     case MVM_OP_ne_I: {
                         MVMObject *a = GET_REG(cur_op, 2).o, *b = GET_REG(cur_op, 4).o;
-                        GET_REG(cur_op, 0).i64 = MP_EQ != MVM_bigint_cmp(a, b);
+                        GET_REG(cur_op, 0).i64 = MP_EQ != MVM_bigint_cmp(tc, a, b);
                         cur_op += 6;
                         break;
                     }
                     case MVM_OP_lt_I: {
                         MVMObject *a = GET_REG(cur_op, 2).o, *b = GET_REG(cur_op, 4).o;
-                        GET_REG(cur_op, 0).i64 = MP_LT == MVM_bigint_cmp(a, b);
+                        GET_REG(cur_op, 0).i64 = MP_LT == MVM_bigint_cmp(tc, a, b);
                         cur_op += 6;
                         break;
                     }
                     case MVM_OP_le_I: {
                         MVMObject *a = GET_REG(cur_op, 2).o, *b = GET_REG(cur_op, 4).o;
-                        GET_REG(cur_op, 0).i64 = MP_GT != MVM_bigint_cmp(a, b);
+                        GET_REG(cur_op, 0).i64 = MP_GT != MVM_bigint_cmp(tc, a, b);
                         cur_op += 6;
                         break;
                     }
                     case MVM_OP_gt_I: {
                         MVMObject *a = GET_REG(cur_op, 2).o, *b = GET_REG(cur_op, 4).o;
-                        GET_REG(cur_op, 0).i64 = MP_GT == MVM_bigint_cmp(a, b);
+                        GET_REG(cur_op, 0).i64 = MP_GT == MVM_bigint_cmp(tc, a, b);
                         cur_op += 6;
                         break;
                     }
                     case MVM_OP_ge_I: {
                         MVMObject *a = GET_REG(cur_op, 2).o, *b = GET_REG(cur_op, 4).o;
-                        GET_REG(cur_op, 0).i64 = MP_LT != MVM_bigint_cmp(a, b);
+                        GET_REG(cur_op, 0).i64 = MP_LT != MVM_bigint_cmp(tc, a, b);
+                        cur_op += 6;
+                        break;
+                    }
+                    case MVM_OP_isprime_I: {
+                        MVMObject *a = GET_REG(cur_op, 2).o;
+                        MVMint64 b = GET_REG(cur_op, 4).i64;
+                        GET_REG(cur_op, 0).i64 = MVM_bigint_is_prime(tc, a, b);
+                        cur_op += 6;
+                        break;
+                    }
+                    case MVM_OP_rand_I: {
+                        MVMObject *max = GET_REG(cur_op, 2).o, *type = GET_REG(cur_op, 4).o;
+                        MVMROOT(tc, type, {
+                            MVMObject *rnd = MVM_repr_alloc_init(tc, type);
+                            MVM_bigint_rand(tc, rnd, max);
+                            GET_REG(cur_op, 0).o = rnd;
+                        });
+                        cur_op += 6;
+                        break;
+                    }
+                    case MVM_OP_coerce_nI: {
+                        MVMnum64 n = GET_REG(cur_op, 2).n64;
+                        MVMObject *type = GET_REG(cur_op, 4).o;
+                        MVMROOT(tc, n, {
+                            MVMROOT(tc, type, {
+                                MVMObject *a = MVM_repr_alloc_init(tc, type);
+                                MVMROOT(tc, a, {
+                                    MVM_bigint_from_num(tc, a, n);
+                                    GET_REG(cur_op, 0).o = a;
+                                });
+                            });
+                        });
                         cur_op += 6;
                         break;
                     }
                     case MVM_OP_coerce_sI: {
-                        MVMString *s = GET_REG(cur_op, 2).s, *type = GET_REG(cur_op, 4).o;
+                        MVMString *s = GET_REG(cur_op, 2).s;
+                        MVMObject *type = GET_REG(cur_op, 4).o;
                         MVMROOT(tc, s, {
                             MVMROOT(tc, type, {
                                 MVMObject *a = MVM_repr_alloc_init(tc, type);
                                 MVMROOT(tc, a, {
                                     MVMuint8 *buf = MVM_string_ascii_encode(tc, s, NULL);
-                                    MVM_bigint_from_str(a, buf);
+                                    MVM_bigint_from_str(tc, a, buf);
                                     free(buf);
                                     GET_REG(cur_op, 0).o = a;
                                 });
@@ -1683,14 +1742,53 @@ void MVM_interp_run(MVMThreadContext *tc, void (*initial_invoke)(MVMThreadContex
                         cur_op += 6;
                         break;
                     }
+                    case MVM_OP_coerce_In: {
+                        MVMObject *a = GET_REG(cur_op, 2).o;
+                        GET_REG(cur_op, 0).n64 = MVM_bigint_to_num(tc, a);
+                        cur_op += 4;
+                        break;
+                    }
                     case MVM_OP_coerce_Is: {
                         MVMObject *a = GET_REG(cur_op, 2).o;
                         MVMROOT(tc, a, {
-                            GET_REG(cur_op, 0).s = MVM_bigint_to_str(tc, a);
+                            GET_REG(cur_op, 0).s = MVM_bigint_to_str(tc, a, 10);
                         });
                         cur_op += 4;
                         break;
                     }
+                    case MVM_OP_isbig_I: {
+                        GET_REG(cur_op, 0).i64 = MVM_bigint_is_big(tc, GET_REG(cur_op, 2).o);
+                        cur_op += 4;
+                        break;
+                    }
+                    case MVM_OP_base_I: {
+                        MVMObject *a = GET_REG(cur_op, 2).o;
+                        MVMROOT(tc, a, {
+                            GET_REG(cur_op, 0).s = MVM_bigint_to_str(tc, a, GET_REG(cur_op, 4).i64);
+                        });
+                        cur_op += 6;
+                        break;
+                    }
+                    case MVM_OP_radix_I:
+                        GET_REG(cur_op, 0).o = MVM_bigint_radix(tc, 
+                            GET_REG(cur_op, 2).i64, GET_REG(cur_op, 4).s,
+                            GET_REG(cur_op, 6).i64, GET_REG(cur_op, 8).i64, GET_REG(cur_op, 10).o);
+                        cur_op += 12;
+                        break;
+                    case MVM_OP_div_In: {
+                        MVMObject *a = GET_REG(cur_op, 2).o, *b = GET_REG(cur_op, 4).o;
+                        GET_REG(cur_op, 0).n64 = MVM_bigint_div_num(tc, a, b);
+                        cur_op += 6;
+                        break;
+                    }
+                    case MVM_OP_log_n:
+                        GET_REG(cur_op, 0).n64 = log(GET_REG(cur_op, 2).n64);
+                        cur_op += 4;
+                        break;
+                    case MVM_OP_exp_n:
+                        GET_REG(cur_op, 0).n64 = exp(GET_REG(cur_op, 2).n64);
+                        cur_op += 4;
+                        break;
                     default: {
                         MVM_panic(MVM_exitcode_invalidopcode, "Invalid opcode executed (corrupt bytecode stream?) bank %u opcode %u",
                                 MVM_OP_BANK_math, *(cur_op-1));
@@ -2422,13 +2520,10 @@ void MVM_interp_run(MVMThreadContext *tc, void (*initial_invoke)(MVMThreadContex
                         break;
                     }
                     case MVM_OP_decont: {
-                        if (STABLE(GET_REG(cur_op, 2).o)->container_spec != NULL) {
-                            MVM_exception_throw_adhoc(tc, "Decontainerization NYI");
-                        }
-                        else {
-                            GET_REG(cur_op, 0).o = GET_REG(cur_op, 2).o;
-                        }
+                        MVMObject *obj = GET_REG(cur_op, 2).o;
+                        MVMRegister *r = &GET_REG(cur_op, 0);
                         cur_op += 4;
+                        DECONT(tc, obj, *r);
                         break;
                     }
                     case MVM_OP_setboolspec: {
@@ -2708,6 +2803,26 @@ void MVM_interp_run(MVMThreadContext *tc, void (*initial_invoke)(MVMThreadContex
                             STABLE(obj), OBJECT_BODY(obj),
                             GET_REG(cur_op, 4).o, GET_REG(cur_op, 6).s, MVM_NO_HINT);
                         cur_op += 8;
+                        break;
+                    }
+                    case MVM_OP_setcontspec: {
+                        MVMSTable *st = STABLE(GET_REG(cur_op, 0).o);
+                        MVMContainerConfigurer *cc = MVM_6model_get_container_config(tc, GET_REG(cur_op, 2).s);
+                        if (st->container_spec) {
+                            MVM_exception_throw_adhoc(tc,
+                                "Cannot change a type's container specification");
+                        }
+
+                        cc->set_container_spec(tc, st);
+                        cc->configure_container_spec(tc, st, GET_REG(cur_op, 4).o);
+                        cur_op += 6;
+                        break;
+                    }
+                    case MVM_OP_existspos: {
+                        MVMObject *obj = GET_REG(cur_op, 2).o;
+                        GET_REG(cur_op, 0).i64 = REPR(obj)->pos_funcs->exists_pos(tc,
+                            STABLE(obj), obj, OBJECT_BODY(obj), GET_REG(cur_op, 4).i64);
+                        cur_op += 6;
                         break;
                     }
                     default: {

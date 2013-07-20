@@ -173,6 +173,8 @@ BANK 0 primitives
 0xAB    lexprimspec         w(int64) r(obj) r(str)
 0xAC    ceil_n              w(int64) r(num64)
 0xAD    floor_n             w(int64) r(num64)
+0xAE    assign              r(obj) r(obj)
+0xAF    assignunchecked     r(obj) r(obj)
 
 BANK 1 dev
 0x00    sleep               r(int64)
@@ -287,6 +289,9 @@ BANK 3 math
 0x33    isbig_I             w(int64) r(obj)
 0x34    base_I              w(str) r(obj) r(int64)
 0x35    radix_I             w(obj) r(int64) r(str) r(int64) r(int64) r(obj)
+0x36    div_In              w(num64) r(obj) r(obj)
+0x37    log_n               w(num64) r(num64)
+0x38    exp_n               w(num64) r(num64)
 
 BANK 4 object
 0x00    knowhow             w(obj)
@@ -421,6 +426,9 @@ BANK 4 object
 0x81    hlllist             w(obj)
 0x82    hllhash             w(obj)
 0x83    attrinited          w(int64) r(obj) r(obj) r(str)
+0x84    setcontspec         r(obj) r(str) r(obj)
+0x85    existspos           w(int64) r(obj) r(int64)
+
 
 BANK 5 io
 0x00    copy_f              r(str) r(str)
@@ -470,7 +478,7 @@ BANK 5 io
 0x2C    setencoding         r(obj) r(str)
 0x2D    print               r(str)
 0x2E    say                 r(str)
-0x2F    readlall_fh         w(str) r(obj)
+0x2F    readall_fh         w(str) r(obj)
 0x30    tell_fh             w(int64) r(obj)
 0x31    stat                w(int64) r(str) r(int64)
 0x32    readline_fh         w(str) r(obj)

@@ -56,6 +56,9 @@ MVMInstance * MVM_vm_create_instance(void) {
     /* Set up weak reference hash mutex. */
     init_mutex(instance->mutex_sc_weakhash, "sc weakhash");
 
+    /* Set up container registry mutex. */
+    init_mutex(instance->mutex_container_registry, "container registry");
+
     /* Bootstrap 6model. It is assumed the GC will not be called during this. */
     MVM_6model_bootstrap(instance->main_thread);
     
@@ -77,7 +80,7 @@ MVMInstance * MVM_vm_create_instance(void) {
     
     /* Set up compiler registr mutex. */
     init_mutex(instance->mutex_compiler_registry, "compiler registry");
-    
+
     /* Create hll symbol tables */
     instance->hll_syms = MVM_repr_alloc_init(instance->main_thread, instance->boot_types->BOOTHash);
     MVM_gc_root_add_permanent(instance->main_thread, (MVMCollectable **)&instance->hll_syms);
