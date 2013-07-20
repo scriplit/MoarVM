@@ -7,14 +7,6 @@ static MVMREPROps *this_repr;
 static wrap_object_t   wrap_object_func;
 static create_stable_t create_stable_func;
 
-/* Special return structure for boolification handling. */
-typedef struct {
-    MVMuint8    *true_addr;
-    MVMuint8    *false_addr;
-    MVMuint8     flip;
-    MVMRegister  res_reg;
-} BoolMethReturnData;
-
 /* Gets size and type information to put it into the REPR data. */
 static void fill_repr_data(MVMThreadContext *tc, MVMSTable *st) {
     MVMCArrayREPRData *repr_data = (MVMCArrayREPRData *)st->REPR_data;
@@ -433,7 +425,7 @@ static void bind_pos_boxed(MVMThreadContext *tc, MVMSTable *st, void *data, MVMi
                 cptr = ((CStructBody *) OBJECT_BODY(obj))->cstruct;
                 break;
             case CARRAY_ELEM_KIND_CPOINTER:
-                cptr = ((CPointerBody *) OBJECT_BODY(obj))->ptr;
+                cptr = ((MVMCPointerBody *) OBJECT_BODY(obj))->ptr;
                 break;
             default:
                 Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,

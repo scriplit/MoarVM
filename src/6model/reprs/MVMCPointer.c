@@ -1,8 +1,7 @@
-#define PARROT_IN_EXTENSION
-#include "parrot/parrot.h"
-#include "parrot/extend.h"
-#include "../sixmodelobject.h"
-#include "CPointer.h"
+#include "moarvm.h"
+#include "../3rdparty/dyncall/dynload/dynload.h"
+#include "../3rdparty/dyncall/dyncall/dyncall.h"
+#include "../3rdparty/dyncall/dyncallback/dyncallback.h"
 
 /* This representation's function pointer table. */
 static MVMREPROps *this_repr;
@@ -14,34 +13,25 @@ static create_stable_t create_stable_func;
 /* Creates a new type object of this representation, and associates it with
  * the given HOW. */
 static MVMObject * type_object_for(MVMThreadContext *tc, MVMObject *HOW) {
-    /* Create new object instance. */
-    CPointerInstance *obj = mem_allocate_zeroed_typed(CPointerInstance);
+    MVMSTable *st  = MVM_gc_allocate_stable(tc, this_repr, HOW);
 
-    /* Build an MVMSTable. */
-    MVMObject *st_pmc = create_stable_func(interp, this_repr, HOW);
-    MVMSTable *st  = STABLE_STRUCT(st_pmc);
-
-    /* Create type object and point it back at the MVMSTable. */
-    obj->common.stable = st_pmc;
-    st->WHAT = wrap_object_func(interp, obj);
-    PARROT_GC_WRITE_BARRIER(interp, st_pmc);
-
-    /* Flag it as a type object. */
-    MARK_AS_TYPE_OBJECT(st->WHAT);
-
+    MVMROOT(tc, st, {
+        MVMObject *obj = MVM_gc_allocate_type_object(tc, st);
+        MVM_ASSIGN_REF(tc, st, st->WHAT, obj);
+        st->size = sizeof(MVMCPointer);
+    });
+    
     return st->WHAT;
 }
 
 /* Composes the representation. */
-static void compose(MVMThreadContext *tc, MVMSTable *st, MVMObject *repr_info) {
-    /* Nothing to do. */
+static void compose(MVMThreadContext *tc, MVMSTable *st, MVMObject *info) {
+    /* Nothing to do for this REPR. */
 }
 
 /* Creates a new instance based on the type object. */
 static MVMObject * allocate(MVMThreadContext *tc, MVMSTable *st) {
-    CPointerInstance *obj = mem_allocate_zeroed_typed(CPointerInstance);
-    obj->common.stable = st->stable_pmc;
-    return wrap_object_func(interp, obj);
+    return MVM_gc_allocate_object(tc, st);
 }
 
 /* Initialize a new instance. */
@@ -50,9 +40,9 @@ static void initialize(MVMThreadContext *tc, MVMSTable *st, void *data) {
 }
 
 /* Copies to the body of one object to another. */
-static void copy_to(MVMThreadContext *tc, MVMSTable *st, void *src, void *dest) {
-    CPointerBody *src_body = (CPointerBody *)src;
-    CPointerBody *dest_body = (CPointerBody *)dest;
+static void copy_to(MVMThreadContext *tc, MVMSTable *st, void *src, MVMObject *dest_root, void *dest) {
+    MVMCPointerBody *src_body = (MVMCPointerBody *)src;
+    MVMCPointerBody *dest_body = (MVMCPointerBody *)dest;
     dest_body->ptr = src_body->ptr;
 }
 

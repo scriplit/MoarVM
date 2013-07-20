@@ -539,7 +539,7 @@ static void bind_attribute_boxed(MVMThreadContext *tc, MVMSTable *st, void *data
                     cobj = ((CStructBody *) OBJECT_BODY(value))->cstruct;
                 }
                 else if(type == CSTRUCT_ATTR_CPTR) {
-                    cobj = ((CPointerBody *) OBJECT_BODY(value))->ptr;
+                    cobj = ((MVMCPointerBody *) OBJECT_BODY(value))->ptr;
                 }
                 else if(type == CSTRUCT_ATTR_STRING) {
                     STRING *str  = REPR(value)->box_funcs->get_str(interp, STABLE(value), OBJECT_BODY(value));

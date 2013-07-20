@@ -1,20 +1,13 @@
-#ifndef CPOINTER_H_GUARD
-#define CPOINTER_H_GUARD
-
-/* Body of a CPointer. */
-typedef struct {
+/* Body of a MVMCPointer. */
+typedef struct _MVMCPointerBody {
     void *ptr;
-} CPointerBody;
+} MVMCPointerBody;
 
-/* This is how an instance with the CPointer representation looks. */
-typedef struct {
-    SixModelObjectCommonalities common;
-    CPointerBody body;
-} CPointerInstance;
+/* This is how an instance with the MVMCPointer representation looks. */
+typedef struct _MVMCPointer {
+    MVMObject common;
+    MVMCPointerBody body;
+} MVMCPointer;
 
-/* Initializes the CPointer REPR. */
-MVMREPROps * CPointer_initialize(MVMThreadContext *tc,
-        MVMObject * (* wrap_object_func_ptr) (MVMThreadContext *tc, void *obj),
-        MVMObject * (* create_stable_func_ptr) (MVMThreadContext *tc, MVMREPROps *REPR, MVMObject *HOW));
-
-#endif
+/* Initializes the MVMCPointer REPR. */
+MVMREPROps * MVMCPointer_initialize(MVMThreadContext *tc);
