@@ -8,12 +8,13 @@ my %BUILDDEF = (
             # Filename conventions
             exe         => '',
             o           => '.o',
+            dll         => '.so',
             dotlib      => '.a',
             dirslash    => '/',
             outtonull   => '/dev/null',
-            dontecho    => '',
             nologo      => '',
             'echo'      => 'echo',
+            silent      => '',
 
             # Command names
             rm          => 'rm -f',
@@ -39,10 +40,11 @@ my %BUILDDEF = (
             # Filename conventions
             exe         => '.exe',
             o           => '.obj',
+            dll         => '.dll',
             dotlib      => '.lib',
             dirslash    => '\\',
             outtonull   => 'NUL',
-            dontecho    => '@',
+            silent      => '.SILENT :',
 
             # Command names
             rm          => 'del /Q',
@@ -243,7 +245,6 @@ sub detect {
     else {
         $config{out2null} = '';
         $config{verbose} = 0;
-        $config{silent} = '$(OUT2NULL) $(ERR2NULL)'
     }
     $config{cflags}  = join ' ' => @config{qw( cmiscflags cinstrument cdebug copt )};
     $config{ldflags} = join ' ' => @config{qw( lmiscflags linstrument ldebug lopt )};
