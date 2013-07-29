@@ -183,11 +183,11 @@ void MVM_repr_register(MVMThreadContext *tc, MVMString *name, MVMREPROps *repr) 
     
     /* XXX TODO make thread-safe */
     /* check if the name is already registered */
-    if (tc->instance->repr_registry) {
+/*    if (tc->instance->repr_registry) {
         MVM_HASH_GET(tc, tc->instance->repr_registry, name, entry);
         if (entry)
             MVM_exception_throw_adhoc(tc, "repr already registered!");
-    }
+    }*/
     
     /* Allocate a hash entry for the name-to-ID.
         Could one day be unified with MVMREPROps, I suppose. */
