@@ -582,6 +582,21 @@ static size_t uv__fs_unlock(uv_fs_t* req) {
   return r;
 }
 
+static size_t uv__fs_getfullpath(uv_fs_t* req) {
+  char buf[PATH_MAX];
+
+  const char *path = req->path;
+
+  if (*path == '/') {
+    req->new_path = strdup(path);
+  } else {
+    uv_cwd(buf, PATH_MAX);
+    req->new_path = strdup(strcat(buf, req->path));
+  }
+
+  return 0;
+}
+
 static void uv__to_stat(struct stat* src, uv_stat_t* dst) {
   dst->st_dev = src->st_dev;
   dst->st_mode = src->st_mode;
@@ -712,6 +727,7 @@ static void uv__fs_work(struct uv__work* w) {
     X(UTIME, uv__fs_utime(req));
     X(WRITE, uv__fs_write(req));
     X(SEEK, lseek64(req->file, req->off, req->whence));
+    X(GETFULLPATH, uv__fs_getfullpath(req));
     X(LOCK, uv__fs_lock(req));
     X(UNLOCK, uv__fs_unlock(req));
     default: abort();
@@ -1062,16 +1078,30 @@ int uv_fs_lock(uv_loop_t* loop,
 }
 
 int uv_fs_unlock(uv_loop_t* loop,
-                uv_fs_t* req,
-                uv_file file,
-                uv_fs_cb cb) {
+                  uv_fs_t* req,
+                  uv_file file,
+                  uv_fs_cb cb) {
   INIT(UNLOCK);
   req->file = file;
   POST;
 }
 
+int uv_fs_getfullpath(uv_loop_t* loop,
+                         uv_fs_t* req,
+                         const char* path,
+                         const char** new_path,
+                         uv_fs_cb cb) {
+  INIT(GETFULLPATH);
+  new_path = &(req->new_path);
+  PATH;
+  POST;
+}
+
 void uv_fs_req_cleanup(uv_fs_t* req) {
   free((void*) req->path);
+
+  if(req->new_path) free((void*) req->new_path);
+
   req->path = NULL;
   req->new_path = NULL;
 

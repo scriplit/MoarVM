@@ -1,3 +1,4 @@
+
 /* Copyright Joyent, Inc. and other Node contributors. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -1519,6 +1520,48 @@ static void fs__fchown(uv_fs_t* req) {
   req->result = 0;
 }
 
+static void fs__getfullpath(uv_fs_t* req) {
+  WCHAR pathw[_MAX_PATH];
+  if (_wfullpath(pathw, req->pathw, _MAX_PATH) == NULL) {
+    SET_REQ_RESULT(req, -1);
+  } else {
+    int target_len = WideCharToMultiByte(CP_UTF8,
+                                         0,
+                                         pathw,
+                                         -1,
+                                         NULL,
+                                         0,
+                                         NULL,
+                                         NULL);
+    if (target_len == 0) {
+      SET_REQ_RESULT(req, -1);
+      return;
+    } else {
+      char* target = (char*) malloc(target_len + 1);
+      if (target == NULL) {
+        SetLastError(ERROR_OUTOFMEMORY);
+        SET_REQ_RESULT(req, -1);
+        return;
+      }
+
+      target_len = WideCharToMultiByte(CP_UTF8,
+                                        0,
+                                        pathw,
+                                        -1,
+                                        target,
+                                        target_len,
+                                        NULL,
+                                        NULL);
+      target[target_len] = '\0';
+
+      req->new_path = target;
+
+      req->flags |= UV_FS_FREE_PATHS;
+
+      SET_REQ_RESULT(req, 0);
+    }
+  }
+}
 
 static DWORD WINAPI uv_fs_thread_proc(void* parameter) {
   uv_fs_t* req = (uv_fs_t*) parameter;
@@ -1536,6 +1579,7 @@ static DWORD WINAPI uv_fs_thread_proc(void* parameter) {
     XX(LOCK, lock)
     XX(UNLOCK, unlock)
     XX(SEEK, seek)
+    XX(GETFULLPATH, getfullpath)
     XX(SENDFILE, sendfile)
     XX(STAT, stat)
     XX(LSTAT, lstat)
@@ -1736,7 +1780,7 @@ int uv_fs_mkdir_p(uv_loop_t* loop, uv_fs_t* req, const char* path, int mode,
     uv_fs_cb cb) {
   int err;
 
-  uv_fs_req_init(loop, req, UV_FS_MKDIR, cb);
+  uv_fs_req_init(loop, req, UV_FS_MKDIR_P, cb);
 
   err = fs__capture_path(loop, req, path, NULL, cb != NULL);
   if (err) {
@@ -2118,6 +2162,27 @@ int uv_fs_futime(uv_loop_t* loop, uv_fs_t* req, uv_file fd, double atime,
   }
 }
 
+int uv_fs_getfullpath(uv_loop_t* loop, uv_fs_t* req, const char* path,
+    const char** new_path, uv_fs_cb cb) {
+  int err;
+
+  uv_fs_req_init(loop, req, UV_FS_GETFULLPATH, cb);
+
+  err = fs__capture_path(loop, req, path, NULL, cb != NULL);
+  if (err) {
+    return uv_translate_sys_error(err);
+  }
+
+  new_path = &(req->new_path);
+
+  if (cb) {
+    QUEUE_FS_TP_JOB(loop, req);
+    return 0;
+  } else {
+    fs__getfullpath(req);
+    return req->result;
+  }
+}
 
 void uv_process_fs_req(uv_loop_t* loop, uv_fs_t* req) {
   assert(req->cb);
@@ -2130,8 +2195,15 @@ void uv_fs_req_cleanup(uv_fs_t* req) {
   if (req->flags & UV_FS_CLEANEDUP)
     return;
 
-  if (req->flags & UV_FS_FREE_PATHS)
+  if (req->flags & UV_FS_FREE_PATHS) {
     free(req->pathw);
+
+    if (req->new_path) {
+      free((void *)req->new_path);
+      req->new_path = NULL;
+    }
+  }
+
 
   if (req->flags & UV_FS_FREE_PTR)
     free(req->ptr);
