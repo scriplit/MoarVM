@@ -546,7 +546,7 @@ RB_HEAD(uv_timer_tree_s, uv_timer_s);
   union {                                                                     \
     struct {                                                                  \
       int mode;                                                               \
-      const char* new_path;                                                               \
+      const char* new_path;                                                   \
       WCHAR* new_pathw;                                                       \
       int file_flags;                                                         \
       int fd_out;                                                             \
@@ -586,3 +586,5 @@ int uv_utf8_to_utf16(const char* utf8Buffer, WCHAR* utf16Buffer,
     size_t utf16Size);
 
 #define UV_PLATFORM_HAS_IP6_LINK_LOCAL_ADDRESS
+
+#define uv_thread_yield SwitchToThread
