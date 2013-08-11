@@ -202,7 +202,6 @@ MVMint64 MVM_proc_nametouid(MVMThreadContext *tc, MVMString *name) {
     char *lpSystemName  = NULL;
     char *lpAccountName = namestring;
     int pos = 0;
-    int hasSlash = 0;
     const int length = strlen(namestring);
 
     while (pos < length) {
@@ -210,7 +209,6 @@ MVMint64 MVM_proc_nametouid(MVMThreadContext *tc, MVMString *name) {
             namestring[pos] = '\0';
             lpSystemName    = namestring;
             lpAccountName   = namestring + pos + 1;
-            hasSlash = 1;
             break;
         }
         ++pos;
@@ -224,10 +222,9 @@ MVMint64 MVM_proc_nametouid(MVMThreadContext *tc, MVMString *name) {
         lpReferencedDomainNameLength = MAX_NAME;
         r = LookupAccountName(lpSystemName, lpAccountName, pSid, &cbSid,
             lpReferencedDomainName, &lpReferencedDomainNameLength, &AccountType);
+        result = (MVMint64) pSid;
+        free(pSid);
     }
-
-    if (hasSlash)
-        namestring[pos] = '/';
 
     free(namestring);
 
@@ -235,9 +232,7 @@ MVMint64 MVM_proc_nametouid(MVMThreadContext *tc, MVMString *name) {
         MVM_exception_throw_adhoc(tc, "Failed to get uid from user name: %s", GetLastError());
     }
 
-    result = (MVMint64) pSid;
 #endif
-
 
     return (MVMint64)result;
 }
