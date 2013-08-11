@@ -11,6 +11,8 @@ extern char **environ;
 #  endif
 #endif
 
+/* microsoft guy uses 256,
+ * see http://msdn.microsoft.com/en-us/library/windows/desktop/aa379554%28v=vs.85%29.aspx */
 #ifdef _WIN32
 #define MAX_NAME 256
 #endif
@@ -184,30 +186,60 @@ MVMString * MVM_proc_gidtoname(MVMThreadContext *tc, MVMint64 groupid) {
     return result;
 }
 
+#define IS_SLASH(c) ((c) == L'\\' || (c) == L'/')
+
 /* translates username to userid */
 MVMint64 MVM_proc_nametouid(MVMThreadContext *tc, MVMString *name) {
-    apr_status_t rv;
-    apr_uid_t userid;
-    apr_gid_t groupid;
-    char *namestring = MVM_string_utf8_encode_C_string(tc, name);
-    apr_pool_t *tmp_pool;
+    MVMint64 result;
+    char * const namestring = MVM_string_utf8_encode_C_string(tc, name);
+#ifdef _WIN32
+    TCHAR lpReferencedDomainName[MAX_NAME];
+    SID_NAME_USE AccountType;
+    DWORD r;
+    PSID  pSid;
+    DWORD cbSid = 0;
+    DWORD lpReferencedDomainNameLength = MAX_NAME;
+    char *lpSystemName  = NULL;
+    char *lpAccountName = namestring;
+    int pos = 0;
+    int hasSlash = 0;
+    const int length = strlen(namestring);
 
-    /* need a temporary pool */
-    if ((rv = apr_pool_create(&tmp_pool, POOL(tc))) != APR_SUCCESS) {
-        free(namestring);
-        MVM_exception_throw_apr_error(tc, rv, "Failed to get uid from user name: ");
+    while (pos < length) {
+        if (IS_SLASH(namestring[pos])) {
+            namestring[pos] = '\0';
+            lpSystemName    = namestring;
+            lpAccountName   = namestring + pos + 1;
+            hasSlash = 1;
+            break;
+        }
+        ++pos;
     }
 
-    if ((rv = apr_uid_get(&userid, &groupid, (const char *)namestring, tmp_pool)) != APR_SUCCESS) {
-        apr_pool_destroy(tmp_pool);
-        free(namestring);
-        MVM_exception_throw_apr_error(tc, rv, "Failed to get uid from user name: ");
+    r = LookupAccountName(lpSystemName, lpAccountName, NULL, &cbSid,
+        lpReferencedDomainName, &lpReferencedDomainNameLength, &AccountType);
+
+    if (cbSid) {
+        pSid = malloc(cbSid);
+        lpReferencedDomainNameLength = MAX_NAME;
+        r = LookupAccountName(lpSystemName, lpAccountName, pSid, &cbSid,
+            lpReferencedDomainName, &lpReferencedDomainNameLength, &AccountType);
     }
 
-    apr_pool_destroy(tmp_pool);
+    if (hasSlash)
+        namestring[pos] = '/';
+
     free(namestring);
 
-    return (MVMint64)userid;
+    if (!cbSid || !r) {
+        MVM_exception_throw_adhoc(tc, "Failed to get uid from user name: %s", GetLastError());
+    }
+
+    result = (MVMint64) pSid;
+#endif
+
+
+    return (MVMint64)result;
 }
 
 /* translates a userid to username */
