@@ -237,44 +237,71 @@ MVMString * MVM_proc_getusername(MVMThreadContext *tc) {
 
 /* gets the uid of the calling process */
 MVMint64 MVM_proc_getuid(MVMThreadContext *tc) {
-    apr_status_t rv;
-    apr_uid_t userid;
-    apr_gid_t groupid;
-    apr_pool_t *tmp_pool;
+    MVMint64 uid;
 
-    /* need a temporary pool */
-    if ((rv = apr_pool_create(&tmp_pool, POOL(tc))) != APR_SUCCESS) {
-        MVM_exception_throw_apr_error(tc, rv, "Failed to get current uid: ");
+#ifdef _WIN32
+    HANDLE TokenHandle;
+    TOKEN_USER *TokenInformation;
+    DWORD TokenInformationLength;
+
+    if(OpenProcessToken(GetCurrentProcess(),
+        STANDARD_RIGHTS_READ | READ_CONTROL | TOKEN_QUERY, &TokenHandle) == 0) {
+        goto end;
     }
 
-    if ((rv = apr_uid_current(&userid, &groupid, tmp_pool)) != APR_SUCCESS) {
-        apr_pool_destroy(tmp_pool);
-        MVM_exception_throw_apr_error(tc, rv, "Failed to get current uid: ");
-    }
+    if (GetTokenInformation(TokenHandle, TokenUser, NULL, 0, &TokenInformationLength) == 0) {
+        if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
+            TokenInformation = malloc(TokenInformationLength);
 
-    apr_pool_destroy(tmp_pool);
-    return (MVMint64)userid;
+            if (GetTokenInformation(TokenHandle, TokenUser, TokenInformation,
+                TokenInformationLength, &TokenInformationLength) == 0) {
+                uid = (MVMint64)TokenInformation->User.Sid;
+                free(TokenInformation);
+                return uid;
+            }
+            free(TokenInformation);
+        }
+    }
+end:
+    CloseHandle(TokenHandle);
+    MVM_exception_throw_adhoc(tc, "Failed to get current uid: %s", GetLastError());
+
+#endif
+
+
 }
 
 /* gets the gid of the calling process */
 MVMint64 MVM_proc_getgid(MVMThreadContext *tc) {
-    apr_status_t rv;
-    apr_uid_t userid;
-    apr_gid_t groupid;
-    apr_pool_t *tmp_pool;
+    MVMint64 gid;
+#ifdef _WIN32
+    HANDLE TokenHandle;
+    TOKEN_PRIMARY_GROUP *TokenInformation;
+    DWORD TokenInformationLength;
 
-    /* need a temporary pool */
-    if ((rv = apr_pool_create(&tmp_pool, POOL(tc))) != APR_SUCCESS) {
-        MVM_exception_throw_apr_error(tc, rv, "Failed to get current gid: ");
+    if(OpenProcessToken(GetCurrentProcess(),
+        STANDARD_RIGHTS_READ | READ_CONTROL | TOKEN_QUERY, &TokenHandle) == 0) {
+        goto end;
     }
 
-    if ((rv = apr_uid_current(&userid, &groupid, tmp_pool)) != APR_SUCCESS) {
-        apr_pool_destroy(tmp_pool);
-        MVM_exception_throw_apr_error(tc, rv, "Failed to get current gid: ");
-    }
+    if (GetTokenInformation(TokenHandle, TokenPrimaryGroup, NULL, 0, &TokenInformationLength) == 0 ) {
+        if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
+            TokenInformation = malloc(TokenInformationLength);
 
-    apr_pool_destroy(tmp_pool);
-    return (MVMint64)groupid;
+            if (GetTokenInformation(TokenHandle, TokenPrimaryGroup, TokenInformation,
+                TokenInformationLength, &TokenInformationLength) == 0) {
+                gid = (MVMint64)TokenInformation->PrimaryGroup;
+                free(TokenInformation);
+                return gid;
+            }
+            free(TokenInformation);
+        }
+    }
+end:
+    CloseHandle(TokenHandle);
+    MVM_exception_throw_adhoc(tc, "Failed to get current gid: %s", GetLastError());
+
+#endif
 }
 
 /* gets the homedir of the current user. Probably should take username as an argument */
