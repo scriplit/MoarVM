@@ -58,29 +58,37 @@ MVMObject * MVM_proc_getenvhash(MVMThreadContext *tc) {
 /* gets environment variable value */
 MVMString * MVM_proc_getenv(MVMThreadContext *tc, MVMString *var) {
     MVMString *result;
-    apr_status_t rv;
     char *varstring = MVM_string_utf8_encode_C_string(tc, var);
     char *value;
-    apr_pool_t *tmp_pool;
 
-    /* need a temporary pool */
-    if ((rv = apr_pool_create(&tmp_pool, POOL(tc))) != APR_SUCCESS) {
-        free(varstring);
-        apr_pool_destroy(tmp_pool);
-        MVM_exception_throw_apr_error(tc, rv, "Failed to get env variable: ");
+#ifdef WIN32
+    char dummy;
+    DWORD size = GetEnvironmentVariableA(varstring, &dummy, 0);
+
+    if (size != 0) {
+        value = malloc(size);
+        size  = GetEnvironmentVariableA(varstring, value, size);
+        if (size == 0) { /* someone just changed it? */
+            value = NULL;
+        }
+    } else {
+        value = NULL;
     }
 
-    if ((rv = apr_env_get(&value, (const char *)varstring, tmp_pool)) != APR_SUCCESS && rv != 2) {
-        free(varstring);
-        apr_pool_destroy(tmp_pool);
-        MVM_exception_throw_apr_error(tc, rv, "Failed to get env variable: ");
-    }
+#else
 
-    /* TODO find out the define for the magic value 2 (env var not found) */
-    result = MVM_string_utf8_decode(tc, tc->instance->VMString, rv == 2 ? "" : value, rv == 2 ? 0 : strlen(value));
+    value = getenv(varstring);
+    result = MVM_decode_C_buffer_to_string(tc, tc->instance->VMString, value == NULL ? "" : value, value == NULL ? 0 : strlen(value), MVM_encoding_type_utf8);
+#endif
+    /* Can't use MVM_encoding_type_utf8 if it's in GBK encoding environment, otherwise it will exit directly. */
+    result = MVM_decode_C_buffer_to_string(tc, tc->instance->VMString, value == NULL ? "" : value, value == NULL ? 0 : strlen(value), MVM_encoding_type_latin1);
+
+#ifdef WIN32
+    if (value)
+        free(value);
+#endif
 
     free(varstring);
-    apr_pool_destroy(tmp_pool);
 
     return result;
 }
