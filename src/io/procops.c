@@ -2,7 +2,7 @@
 
 /* MSVC compilers know about environ,
  * see http://msdn.microsoft.com/en-us//library/vstudio/stxk41x1.aspx */
-#ifndef WIN32
+#ifndef _WIN32
 #  ifdef __APPLE_CC__
 #    include <crt_externs.h>
 #    define environ (*_NSGetEnviron())
@@ -27,7 +27,7 @@ MVMObject * MVM_proc_getenvhash(MVMThreadContext *tc) {
         MVM_gc_root_temp_push(tc, (MVMCollectable **)&env_hash);
 
         while ((env = environ[pos++]) != NULL) {
-#ifndef WIN32
+#ifndef _WIN32
             MVMString *str  = MVM_decode_C_buffer_to_string(tc, tc->instance->VMString, env, strlen(env), MVM_encoding_type_utf8);
 #else
             /* Can't use MVM_encoding_type_utf8 if it's in GBK encoding environment, otherwise it will exit directly. */
@@ -61,7 +61,7 @@ MVMString * MVM_proc_getenv(MVMThreadContext *tc, MVMString *var) {
     char *varstring = MVM_string_utf8_encode_C_string(tc, var);
     char *value;
 
-#ifdef WIN32
+#ifdef _WIN32
     char dummy;
     DWORD size = GetEnvironmentVariableA(varstring, &dummy, 0);
 
@@ -75,67 +75,59 @@ MVMString * MVM_proc_getenv(MVMThreadContext *tc, MVMString *var) {
         value = NULL;
     }
 
+    /* Can't use MVM_encoding_type_utf8 if it's in GBK encoding environment, otherwise it will exit directly. */
+    result = MVM_decode_C_buffer_to_string(tc, tc->instance->VMString, value == NULL ? "" : value, value == NULL ? 0 : strlen(value), MVM_encoding_type_latin1);
+
+    if (value)
+        free(value);
+
 #else
 
     value = getenv(varstring);
     result = MVM_decode_C_buffer_to_string(tc, tc->instance->VMString, value == NULL ? "" : value, value == NULL ? 0 : strlen(value), MVM_encoding_type_utf8);
-#endif
-    /* Can't use MVM_encoding_type_utf8 if it's in GBK encoding environment, otherwise it will exit directly. */
-    result = MVM_decode_C_buffer_to_string(tc, tc->instance->VMString, value == NULL ? "" : value, value == NULL ? 0 : strlen(value), MVM_encoding_type_latin1);
 
-#ifdef WIN32
-    if (value)
-        free(value);
 #endif
 
     free(varstring);
-
     return result;
 }
 
 /* set environment variable */
 void MVM_proc_setenv(MVMThreadContext *tc, MVMString *var, MVMString *value) {
-    apr_status_t rv;
     char *varstring = MVM_string_utf8_encode_C_string(tc, var);
     char *valuestring = MVM_string_utf8_encode_C_string(tc, value);
-    apr_pool_t *tmp_pool;
 
-    /* need a temporary pool */
-    if ((rv = apr_pool_create(&tmp_pool, POOL(tc))) != APR_SUCCESS) {
-        MVM_exception_throw_apr_error(tc, rv, "Failed to set env variable: ");
-    }
-
-    if ((rv = apr_env_set((const char *)varstring, (const char *)valuestring, tmp_pool)) != APR_SUCCESS) {
+#ifdef _WIN32
+    if (SetEnvironmentVariableA(varstring, valuestring) == 0) {
         free(varstring);
         free(valuestring);
-        apr_pool_destroy(tmp_pool);
-        MVM_exception_throw_apr_error(tc, rv, "Failed to set env variable: ");
+        MVM_exception_throw_adhoc(tc, "Failed to set env variable: %s", GetLastError());
     }
+#else
+    if (setenv(varstring, valuestring, 1) == -1) {
+        free(varstring);
+        free(valuestring);
+        MVM_exception_throw_adhoc(tc, "Failed to set env variable: %s", errno);
+    }
+#endif
 
     free(varstring);
     free(valuestring);
-    apr_pool_destroy(tmp_pool);
 }
 
 /* delete environment variable */
 void MVM_proc_delenv(MVMThreadContext *tc, MVMString *var) {
-    apr_status_t rv;
     char *varstring = MVM_string_utf8_encode_C_string(tc, var);
-    apr_pool_t *tmp_pool;
 
-    /* need a temporary pool */
-    if ((rv = apr_pool_create(&tmp_pool, POOL(tc))) != APR_SUCCESS) {
+#ifdef _WIN32
+    if (SetEnvironmentVariableA(varstring, NULL) == 0) {
         free(varstring);
-        MVM_exception_throw_apr_error(tc, rv, "Failed to delete env variable: ");
+        MVM_exception_throw_adhoc(tc, "Failed to set env variable: %s", GetLastError());
     }
+#else
+    unsetenv(varstring);
+#endif
 
-    if ((rv = apr_env_delete((const char *)varstring, tmp_pool)) != APR_SUCCESS) {
-        apr_pool_destroy(tmp_pool);
-        free(varstring);
-        MVM_exception_throw_apr_error(tc, rv, "Failed to get delete variable: ");
-    }
-
-    apr_pool_destroy(tmp_pool);
     free(varstring);
 }
 
