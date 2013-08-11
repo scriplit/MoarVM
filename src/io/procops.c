@@ -11,6 +11,10 @@ extern char **environ;
 #  endif
 #endif
 
+#ifdef _WIN32
+#define MAX_NAME 256
+#endif
+
 #define POOL(tc) (*(tc->interp_cu))->pool
 
 MVMObject * MVM_proc_getenvhash(MVMThreadContext *tc) {
@@ -208,26 +212,24 @@ MVMint64 MVM_proc_nametouid(MVMThreadContext *tc, MVMString *name) {
 
 /* translates a userid to username */
 MVMString * MVM_proc_uidtoname(MVMThreadContext *tc, MVMint64 userid) {
-    MVMString *result;
-    apr_status_t rv;
-    char *namestring;
-    apr_pool_t *tmp_pool;
+#ifdef _WIN32
 
-    /* need a temporary pool */
-    if ((rv = apr_pool_create(&tmp_pool, POOL(tc))) != APR_SUCCESS) {
-        MVM_exception_throw_apr_error(tc, rv, "Failed to get user name from uid: ");
+    TCHAR lpName[MAX_NAME], lpDomain[MAX_NAME];
+    SID_NAME_USE AccountType;
+    DWORD dwSize = MAX_NAME;
+
+    if (LookupAccountSid(NULL, (PSID)userid, lpName, &dwSize, lpDomain, &dwSize, &AccountType) == 0) {
+        MVM_exception_throw_adhoc(tc, "Failed to get user name from uid: %s", GetLastError());
     }
 
-    if ((rv = apr_uid_name_get(&namestring, (apr_uid_t)userid, tmp_pool)) != APR_SUCCESS) {
-        apr_pool_destroy(tmp_pool);
-        MVM_exception_throw_apr_error(tc, rv, "Failed to get user name from uid: ");
+    if (AccountType != SidTypeUser && AccountType != SidTypeAlias
+        && AccountType != SidTypeWellKnownGroup) {
+        MVM_exception_throw_adhoc(tc, "Failed to get user name from uid.");
     }
 
-    result = MVM_string_utf8_decode(tc, tc->instance->VMString, namestring, strlen(namestring));
+    return MVM_string_utf8_decode(tc, tc->instance->VMString, lpName, strlen(lpName));
 
-    apr_pool_destroy(tmp_pool);
-
-    return result;
+#endif
 }
 
 /* gets the username of the calling process */
@@ -254,9 +256,10 @@ MVMint64 MVM_proc_getuid(MVMThreadContext *tc) {
             TokenInformation = malloc(TokenInformationLength);
 
             if (GetTokenInformation(TokenHandle, TokenUser, TokenInformation,
-                TokenInformationLength, &TokenInformationLength) == 0) {
+                TokenInformationLength, &TokenInformationLength)) {
                 uid = (MVMint64)TokenInformation->User.Sid;
                 free(TokenInformation);
+                CloseHandle(TokenHandle);
                 return uid;
             }
             free(TokenInformation);
@@ -289,9 +292,10 @@ MVMint64 MVM_proc_getgid(MVMThreadContext *tc) {
             TokenInformation = malloc(TokenInformationLength);
 
             if (GetTokenInformation(TokenHandle, TokenPrimaryGroup, TokenInformation,
-                TokenInformationLength, &TokenInformationLength) == 0) {
+                TokenInformationLength, &TokenInformationLength)) {
                 gid = (MVMint64)TokenInformation->PrimaryGroup;
                 free(TokenInformation);
+                CloseHandle(TokenHandle);
                 return gid;
             }
             free(TokenInformation);
