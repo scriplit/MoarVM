@@ -1,7 +1,7 @@
 #include "moarvm.h"
 #include "linenoise.h"
 
-#define POOL(tc) (*(tc->interp_cu))->pool
+#define POOL(tc) (*(tc->interp_cu))->body.pool
 
 static void verify_filehandle_type(MVMThreadContext *tc, MVMObject *oshandle, MVMOSHandle **handle, const char *msg) {
     /* work on only MVMOSHandle of type MVM_OSHANDLE_FILE */
@@ -638,6 +638,7 @@ static MVMObject * MVM_file_get_stdstream(MVMThreadContext *tc, MVMuint8 type) {
     result->body.file_handle = handle;
     result->body.handle_type = MVM_OSHANDLE_FILE;
     result->body.encoding_type = MVM_encoding_type_utf8;
+    result->body.std_stream = 1;
 
     return (MVMObject *)result;
 }

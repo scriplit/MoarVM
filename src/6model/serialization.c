@@ -424,7 +424,7 @@ static MVMSTable * read_stable_ref_func(MVMThreadContext *tc, MVMSerializationRe
 /* Checks the header looks sane and all of the places it points to make sense.
  * Also disects the input string into the tables and data segments and populates
  * the reader data structure more fully. */
-static void check_and_disect_input(MVMThreadContext *tc,
+static void check_and_dissect_input(MVMThreadContext *tc,
         MVMSerializationReader *reader, MVMString *data_str) {
     /* Grab data from string. */
     size_t  data_len;
@@ -571,6 +571,7 @@ static void resolve_dependencies(MVMThreadContext *tc, MVMSerializationReader *r
         sc = MVM_sc_find_by_handle(tc, handle);
         if (sc == NULL) {
             MVMString *desc = read_string_from_heap(tc, reader, read_int32(table_pos, 4));
+            if (!desc) desc = handle;
             fail_deserialize(tc, reader,
                 "Missing or wrong version of dependency '%s'",
                 MVM_string_ascii_encode(tc, desc, NULL));
@@ -837,8 +838,7 @@ void MVM_serialization_deserialize(MVMThreadContext *tc, MVMSerializationContext
     MVMint32 scodes, i;
 
     /* Allocate and set up reader. */
-    MVMSerializationReader *reader = malloc(sizeof(MVMSerializationReader));
-    memset(reader, 0, sizeof(MVMSerializationReader));
+    MVMSerializationReader *reader = calloc(1, sizeof(MVMSerializationReader));
     reader->root.sc          = sc;
     reader->root.string_heap = string_heap;
 
@@ -866,8 +866,8 @@ void MVM_serialization_deserialize(MVMThreadContext *tc, MVMSerializationContext
      * to have those partially constructed objects floating around. */
     MVM_gc_allocate_gen2_default_set(tc);
 
-    /* Read header and disect the data into its parts. */
-    check_and_disect_input(tc, reader, data);
+    /* Read header and dissect the data into its parts. */
+    check_and_dissect_input(tc, reader, data);
 
     /* Resolve the SCs in the dependencies table. */
     resolve_dependencies(tc, reader);

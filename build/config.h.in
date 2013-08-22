@@ -6,6 +6,9 @@
  * !!!
  */
 
+ /* TODO: if we want something MVM_API for exporting.
+  * Please take a look at http://gcc.gnu.org/wiki/Visibility */
+
 /* This will eventually get really filled out from configuration.
  * For now, just hardcoded so more interesting things can be done. */
 
@@ -22,8 +25,24 @@
 #define MVMnum64       double
 
 /* Various compiler-specific pragmii. */
-#define MVM_NO_RETURN @noreturn@
-#define MVM_NO_RETURN_GCC @noreturngcc@
+#define MVM_NO_RETURN @noreturnspecifier@
+#define MVM_NO_RETURN_GCC @noreturnattribute@
+
+/* Detect big-endian systems.
+ * Win32 is always little-endian. */
+#ifndef _WIN32
+#  if defined __BYTE_ORDER__
+#    if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+#      define MVM_BIGENDIAN 1
+#    elif __BYTE_ORDER__ != __ORDER_LITTLE_ENDIAN__
+#      error "Unsupported endianness"
+#    endif
+#  elif _BIG_ENDIAN || __BIG_ENDIAN__
+#    define MVM_BIGENDIAN 1
+#  elif !(_LITTLE_ENDIAN || __LITTLE_ENDIAN__)
+#    error "Failed to detect endianness"
+#  endif
+#endif
 
 /* stuff for uthash */
 #define uthash_fatal(msg) MVM_exception_throw_adhoc(tc, "internal hash error: " msg)

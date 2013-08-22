@@ -1,8 +1,9 @@
 #include "moarvm.h"
+#include "platform/time.h"
 
 /* MSVC compilers know about environ,
  * see http://msdn.microsoft.com/en-us//library/vstudio/stxk41x1.aspx */
-#ifndef WIN32
+#ifndef _WIN32
 #  ifdef __APPLE_CC__
 #    include <crt_externs.h>
 #    define environ (*_NSGetEnviron())
@@ -11,12 +12,51 @@ extern char **environ;
 #  endif
 #endif
 
-#define POOL(tc) (*(tc->interp_cu))->pool
+#define POOL(tc) (*(tc->interp_cu))->body.pool
+
+#ifdef _WIN32
+static wchar_t * ANSIToUnicode(MVMuint16 acp, const char *str)
+{
+     const int          len = MultiByteToWideChar(acp, 0, str,-1, NULL,0);
+     wchar_t * const result = (wchar_t *)calloc(len, sizeof(wchar_t));
+
+     memset(result, 0, len * sizeof(wchar_t));
+
+     MultiByteToWideChar(acp, 0, str, -1, (LPWSTR)result, len);
+
+     return result;
+}
+
+static char * UnicodeToUTF8(const wchar_t *str)
+{
+     const int       len = WideCharToMultiByte(CP_UTF8, 0, str, -1, NULL, 0, NULL, NULL);
+     char * const result = (char *)calloc(len, sizeof(char));
+
+     memset(result, 0, len * sizeof(char));
+
+     WideCharToMultiByte(CP_UTF8, 0, str, -1, result, len, NULL, NULL);
+
+     return result;
+}
+
+static char* ANSIToUTF8(MVMuint16 acp, const char* str)
+{
+    wchar_t * const wstr = ANSIToUnicode(acp, str);
+    char  * const result = UnicodeToUTF8(wstr);
+
+    free(wstr);
+    return result;
+}
+
+#endif
 
 MVMObject * MVM_proc_getenvhash(MVMThreadContext *tc) {
     static MVMObject *env_hash;
 
     if (!env_hash) {
+#ifdef _WIN32
+        MVMuint16     acp = GetACP(); /* We should get ACP at runtime. */
+#endif
         MVMuint32     pos = 0;
         MVMString *needle = MVM_decode_C_buffer_to_string(tc, tc->instance->VMString, "=", 1, MVM_encoding_type_ascii);
         char      *env;
@@ -27,16 +67,21 @@ MVMObject * MVM_proc_getenvhash(MVMThreadContext *tc) {
         MVM_gc_root_temp_push(tc, (MVMCollectable **)&env_hash);
 
         while ((env = environ[pos++]) != NULL) {
-#ifndef WIN32
-            MVMString *str  = MVM_decode_C_buffer_to_string(tc, tc->instance->VMString, env, strlen(env), MVM_encoding_type_utf8);
+#ifndef _WIN32
+            MVMString    *str = MVM_decode_C_buffer_to_string(tc, tc->instance->VMString, env, strlen(env), MVM_encoding_type_utf8);
 #else
-            /* Can't use MVM_encoding_type_utf8 if it's in GBK encoding environment, otherwise it will exit directly. */
-            MVMString *str  = MVM_decode_C_buffer_to_string(tc, tc->instance->VMString, env, strlen(env), MVM_encoding_type_latin1);
+            char * const _env = ANSIToUTF8(acp, env);
+            MVMString    *str = MVM_decode_C_buffer_to_string(tc, tc->instance->VMString, _env, strlen(_env), MVM_encoding_type_utf8);
+
 #endif
+
             MVMuint32 index = MVM_string_index(tc, str, needle, 0);
 
             MVMString *key, *val;
 
+#ifdef _WIN32
+            free(_env);
+#endif
             MVM_gc_root_temp_push(tc, (MVMCollectable **)&str);
 
             key  = MVM_string_substring(tc, str, 0, index);
@@ -348,22 +393,20 @@ MVMnum64 MVM_proc_rand_n(MVMThreadContext *tc) {
     return first < second ? (MVMnum64)first / second : (MVMnum64)second / first;
 }
 
-/* gets the system time since the epoch in microseconds.
- * APR says the unix version returns GMT. */
+/* gets the system time since the epoch truncated to integral seconds */
 MVMint64 MVM_proc_time_i(MVMThreadContext *tc) {
-    return (MVMint64)apr_time_now();
+    return MVM_platform_now() / 1000000000;
 }
 
-/* gets the system time since the epoch in seconds.
- * APR says the unix version returns GMT. */
+/* gets the system time since the epoch as floating point seconds */
 MVMnum64 MVM_proc_time_n(MVMThreadContext *tc) {
-    return (MVMnum64)apr_time_now() / 1000000.0;
+    return (MVMnum64)MVM_platform_now() / 1000000000.0;
 }
 
 MVMObject * MVM_proc_clargs(MVMThreadContext *tc) {
     MVMInstance *instance = tc->instance;
     if (!instance->clargs) {
-        MVMObject *clargs = MVM_repr_alloc_init(tc, tc->instance->boot_types->BOOTStrArray);
+        MVMObject *clargs = MVM_repr_alloc_init(tc, MVM_hll_current(tc)->slurpy_array_type);
         MVMROOT(tc, clargs, {
             MVMint64 count;
             for (count = 0; count < instance->num_clargs; count++) {
@@ -371,7 +414,10 @@ MVMObject * MVM_proc_clargs(MVMThreadContext *tc) {
                 MVMString *string = MVM_string_utf8_decode(tc,
                     tc->instance->VMString,
                     instance->raw_clargs[count], strlen(instance->raw_clargs[count]));
-                MVM_repr_push_s(tc, clargs, string);
+                MVMROOT(tc, string, {
+                    MVMObject *boxed = MVM_repr_box_str(tc, tc->instance->boot_types->BOOTStr, string);
+                    MVM_repr_push_o(tc, clargs, boxed);
+                });
             }
         });
 

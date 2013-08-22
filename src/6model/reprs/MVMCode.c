@@ -47,15 +47,18 @@ static void copy_to(MVMThreadContext *tc, MVMSTable *st, void *src, MVMObject *d
     dest_body->sf = src_body->sf;
     if (src_body->outer)
         dest_body->outer = MVM_frame_inc_ref(tc, src_body->outer);
+    /* XXX should these next two really be copied? */
+    dest_body->is_static = dest_body->is_static;
+    dest_body->is_compiler_stub = dest_body->is_compiler_stub;
     MVM_ASSIGN_REF(tc, dest_root, dest_body->code_object, src_body->code_object);
 }
 
 /* Adds held objects to the GC worklist. */
 static void gc_mark(MVMThreadContext *tc, MVMSTable *st, void *data, MVMGCWorklist *worklist) {
     MVMCodeBody *body = (MVMCodeBody *)data;
-    if (body->outer)
-        MVM_gc_root_add_frame_roots_to_worklist(tc, worklist, body->outer);
+    MVM_gc_worklist_add_frame(tc, worklist, body->outer);
     MVM_gc_worklist_add(tc, worklist, &body->code_object);
+    MVM_gc_worklist_add(tc, worklist, &body->sf);
 }
 
 /* Called by the VM in order to free memory associated with this object. */

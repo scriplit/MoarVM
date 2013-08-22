@@ -21,6 +21,8 @@ MVMHLLConfig *MVM_hll_get_config_for(MVMThreadContext *tc, MVMString *name) {
         entry->str_box_type = tc->instance->boot_types->BOOTStr;
         entry->slurpy_array_type = tc->instance->boot_types->BOOTArray;
         entry->slurpy_hash_type = tc->instance->boot_types->BOOTHash;
+        entry->array_iterator_type = tc->instance->boot_types->BOOTIter;
+        entry->hash_iterator_type = tc->instance->boot_types->BOOTIter;
         HASH_ADD_KEYPTR(hash_handle, tc->instance->hll_configs, kdata, klen, entry);
         MVM_gc_root_add_permanent(tc, (MVMCollectable **)&entry->int_box_type);
         MVM_gc_root_add_permanent(tc, (MVMCollectable **)&entry->num_box_type);
@@ -40,11 +42,9 @@ MVMHLLConfig *MVM_hll_get_config_for(MVMThreadContext *tc, MVMString *name) {
 }
 
 #define check_config_key(tc, hash, name, member, config) do { \
-    MVMObject *key = (MVMObject *)MVM_string_utf8_decode((tc), (tc)->instance->VMString, (name), strlen((name))); \
-    MVMObject *val = REPR((hash))->ass_funcs->at_key_boxed((tc), STABLE((hash)), (hash), OBJECT_BODY((hash)), key); \
-    if (val) { \
-        (config)->member = val; \
-    } \
+    MVMString *key = MVM_string_utf8_decode((tc), (tc)->instance->VMString, (name), strlen((name))); \
+    MVMObject *val = MVM_repr_at_key_boxed((tc), (hash), key); \
+    if (val) (config)->member = val; \
 } while (0)
 
 MVMObject * MVM_hll_set_config(MVMThreadContext *tc, MVMString *name, MVMObject *config_hash) {
@@ -62,13 +62,13 @@ MVMObject * MVM_hll_set_config(MVMThreadContext *tc, MVMString *name, MVMObject 
     check_config_key(tc, config_hash, "str_box", str_box_type, config);
     check_config_key(tc, config_hash, "slurpy_array", slurpy_array_type, config);
     check_config_key(tc, config_hash, "slurpy_hash", slurpy_hash_type, config);
-    check_config_key(tc, config_hash, "array_iterator", array_iterator_type, config);
-    check_config_key(tc, config_hash, "hash_iterator", hash_iterator_type, config);
+    check_config_key(tc, config_hash, "array_iter", array_iterator_type, config);
+    check_config_key(tc, config_hash, "hash_iter", hash_iterator_type, config);
 
     return config_hash;
 }
 
 /* Gets the current HLL configuration. */
 MVMHLLConfig *MVM_hll_current(MVMThreadContext *tc) {
-    return (*tc->interp_cu)->hll_config;
+    return (*tc->interp_cu)->body.hll_config;
 }

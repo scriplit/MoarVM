@@ -26,7 +26,7 @@ MVMInstance * MVM_vm_create_instance(void) {
 
     /* Set up instance data structure. */
     instance = calloc(1, sizeof(MVMInstance));
-    instance->boot_types = calloc(1, sizeof(struct _MVMBootTypes));
+    instance->boot_types = calloc(1, sizeof(MVMBootTypes));
 
     /* Allocate instance APR pool. */
     if ((apr_init_stat = apr_pool_create(&instance->apr_pool, NULL)) != APR_SUCCESS) {
@@ -55,6 +55,9 @@ MVMInstance * MVM_vm_create_instance(void) {
 
     /* Set up weak reference hash mutex. */
     init_mutex(instance->mutex_sc_weakhash, "sc weakhash");
+
+    /* Set up loaded compunits hash mutex. */
+    init_mutex(instance->mutex_loaded_compunits, "loaded compunits");
 
     /* Set up container registry mutex. */
     init_mutex(instance->mutex_container_registry, "container registry");
@@ -99,7 +102,7 @@ MVMInstance * MVM_vm_create_instance(void) {
 
 /* Sets up some string constants. */
 static void string_consts(MVMThreadContext *tc) {
-    struct _MVMStringConsts *s = malloc(sizeof(struct _MVMStringConsts));
+    MVMStringConsts *s = malloc(sizeof(MVMStringConsts));
 
     s->empty = MVM_string_ascii_decode_nt(tc, tc->instance->VMString, "");
     MVM_gc_root_add_permanent(tc, (MVMCollectable **)&s->empty);
@@ -124,25 +127,30 @@ static void toplevel_initial_invoke(MVMThreadContext *tc, void *data) {
 }
 
 /* Loads bytecode from the specified file name and runs it. */
-void MVM_vm_run_file(MVMInstance *instance, char *filename) {
+void MVM_vm_run_file(MVMInstance *instance, const char *filename) {
     MVMStaticFrame *start_frame;
 
     /* Map the compilation unit into memory and dissect it. */
     MVMThreadContext *tc = instance->main_thread;
     MVMCompUnit      *cu = MVM_cu_map_from_file(tc, filename);
 
+    cu->body.filename = MVM_string_utf8_decode(tc, instance->VMString, filename, strlen(filename));
+
     /* Run deserialization frame, if there is one. */
-    if (cu->deserialize_frame)
-        MVM_interp_run(tc, &toplevel_initial_invoke, cu->deserialize_frame);
+    if (cu->body.deserialize_frame) {
+        MVMROOT(tc, cu, {
+            MVM_interp_run(tc, &toplevel_initial_invoke, cu->body.deserialize_frame);
+        });
+    }
 
     /* Run the frame marked main, or if there is none then fall back to the
      * first frame. */
-    start_frame = cu->main_frame ? cu->main_frame : cu->frames[0];
+    start_frame = cu->body.main_frame ? cu->body.main_frame : cu->body.frames[0];
     MVM_interp_run(tc, &toplevel_initial_invoke, start_frame);
 }
 
 /* Loads bytecode from the specified file name and dumps it. */
-void MVM_vm_dump_file(MVMInstance *instance, char *filename) {
+void MVM_vm_dump_file(MVMInstance *instance, const char *filename) {
     /* Map the compilation unit into memory and dissect it. */
     MVMThreadContext *tc = instance->main_thread;
     MVMCompUnit      *cu = MVM_cu_map_from_file(tc, filename);

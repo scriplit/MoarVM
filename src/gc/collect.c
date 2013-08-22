@@ -93,7 +93,7 @@ void MVM_gc_collect(MVMThreadContext *tc, MVMuint8 what_to_do, MVMuint8 gen) {
         GCCOLL_LOG(tc, "Thread %d run %d : processing %d items from thread temps\n", worklist->items);
         process_worklist(tc, worklist, &wtp, gen);
 
-        /* Add things that are roots for the first generation because the are
+        /* Add things that are roots for the first generation because they are
         * pointed to by objects in the second generation and process them
         * (also per-thread). Note we need not do this if we're doing a full
         * collection anyway (in fact, we must not for correctness, otherwise
@@ -106,7 +106,7 @@ void MVM_gc_collect(MVMThreadContext *tc, MVMuint8 what_to_do, MVMuint8 gen) {
 
         /* Find roots in frames and process them. */
         if (tc->cur_frame) {
-            MVM_gc_root_add_frame_roots_to_worklist(tc, worklist, tc->cur_frame);
+            MVM_gc_worklist_add_frame(tc, worklist, tc->cur_frame);
             GCCOLL_LOG(tc, "Thread %d run %d : processing %d items from cur_frame \n", worklist->items);
 			process_worklist(tc, worklist, &wtp, gen);
 		}
@@ -156,6 +156,8 @@ static void process_worklist(MVMThreadContext *tc, MVMGCWorklist *worklist, Work
      * old generation. */
     gen2 = tc->gen2;
 
+    MVM_gc_worklist_mark_frame_roots(tc, worklist);
+    
     while ((item_ptr = MVM_gc_worklist_get(tc, worklist))) {
         /* Dereference the object we're considering. */
         MVMCollectable *item = *item_ptr;
@@ -281,12 +283,18 @@ static void process_worklist(MVMThreadContext *tc, MVMGCWorklist *worklist, Work
             *item_ptr = item->forwarder = new_addr;
         }
 
+        /* make sure any rooted frames mark their stuff */
+        MVM_gc_worklist_mark_frame_roots(tc, worklist);
+
         /* Finally, we need to mark the collectable (at its moved address).
          * Track how many items we had before we mark it, in case we need
          * to write barrier them post-move to uphold the generational
          * invariant. */
         gen2count = worklist->items;
         MVM_gc_mark_collectable(tc, worklist, new_addr);
+
+        /* make sure any rooted frames mark their stuff */
+        MVM_gc_worklist_mark_frame_roots(tc, worklist);
 
         /* In moving an object to generation 2, we may have left it pointing
          * to nursery objects. If so, make sure it's in the gen2 roots. */
