@@ -346,7 +346,7 @@ MVMString * MVM_file_readline_interactive_fh(MVMThreadContext *tc, MVMObject *os
 
     verify_filehandle_type(tc, oshandle, &handle, "read from filehandle");
 
-#ifdef MVM_HAS_READLINE
+#if MVM_HAS_READLINE
     line = readline(prompt_str);
 
     free(prompt_str);

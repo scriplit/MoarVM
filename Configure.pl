@@ -27,6 +27,7 @@ GetOptions(\%args, qw(
     os=s shell=s toolchain=s compiler=s
     cc=s ld=s make=s
     build=s host=s
+    no-readline
 )) or die "See --help for further information\n";
 
 pod2usage(1) if $args{help};
@@ -37,6 +38,9 @@ print "Welcome to MoarVM!\n\n";
 $args{debug}      //= 0 + !$args{optimize};
 $args{optimize}   //= 0 + !$args{debug};
 $args{instrument} //= 0;
+
+# disable GNU Readline
+$args{'no-readline'} //= 0;
 
 # fill in C<%defaults>
 if (exists $args{build} || exists $args{host}) {
@@ -49,6 +53,8 @@ else {
 }
 
 $config{name} = $NAME;
+$config{hasreadline} = 0
+    if $args{'no-readline'};
 
 # set options that take priority over all others
 my @keys = qw( cc ld make );
@@ -107,6 +113,8 @@ if ($config{crossconf}) {
 else {
     build::auto::detect_native(\%config, \%defaults);
 }
+
+$config{hasreadline} //= 0;
 
 # dump configuration
 print "\n", <<TERM, "\n";
@@ -399,6 +407,7 @@ __END__
                    [--toolchain <toolchain>] [--compiler <compiler>]
                    [--cc <cc>] [--ld <ld>] [--make <make>]
                    [--debug] [--optimize] [--instrument]
+                   [--no-readline]
 
     ./Configure.pl --build <build-triple> --host <host-triple>
                    [--cc <cc>] [--ld <ld>] [--make <make>]
@@ -467,6 +476,12 @@ options.
 
 Explicitly set the make tool without affecting other configuration
 options.
+
+=item --no-readline
+
+Disable GNU Readline auto-detection and force use of Linenoise.
+This flag is important if you create derivative work based on MoarVM
+that you wish to distribute under a license other than the GNU GPL.
 
 =item --build <build-triple> --host <host-triple>
 
